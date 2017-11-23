@@ -1,0 +1,18 @@
+{
+	"env": {
+    "node": false,
+		"browser": true,
+		"es6": false
+	},
+	"globals": {
+    "module": false,
+    "modules": true,
+    "renderer": true,
+    "DRLJs": true,
+    "$": true,
+    "preval": true
+	},
+	"rules": {
+		"no-console": "error"
+	}
+}

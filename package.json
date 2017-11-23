@@ -1,0 +1,53 @@
+{
+  "private": true,
+  "name": "maxymiser-workflow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node ./scripts/build.js",
+    "clean": "rimraf dist/*",
+    "watch": "node ./scripts/maxymiser-watch.js",
+    "generate": "node ./scripts/generate_cg_v5.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^7.1.6",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-plugin-preval": "^1.6.2",
+    "babel-preset-env": "^1.6.1",
+    "chalk": "^2.3.0",
+    "eslint": "^4.10.0",
+    "eslint-config-ao": "0.0.1-rc.2",
+    "glob": "^7.1.2",
+    "mkdirp": "^0.5.1",
+    "node-sass": "^4.6.0",
+    "postcss": "^6.0.14",
+    "rimraf": "^2.6.2"
+  },
+  "browserlist": [
+    "last 2 versions",
+    "ie >= 9",
+    "ios_saf >= 8",
+    "Android >= 4.3",
+    "> 1%"
+  ],
+  "babel": {
+    "plugins": [
+      "preval"
+    ],
+    "presets": [
+      [
+        "env",
+        {
+          "modules": false
+        }
+      ]
+    ]
+  },
+  "maxymiser-workflow": {
+    "campaign": "maxymiser-workflow-campaign"
+  }
+}
