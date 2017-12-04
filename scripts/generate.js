@@ -4,11 +4,17 @@ const glob = require('glob');
 // const mkdirp = require('mkdirp');
 const path = require('path');
 const template = require('./inc/template_cg_v5');
-const packageJson = require('../package.json');
+const minimist = require('minimist');
 
-var args = process.argv.slice(2);
+const templateDirectory = path.resolve(__dirname, '../template');
+const appDirectory = fs.realpathSync(process.cwd());
 
-const srcDir = path.resolve(__dirname, '../src');
+const packageJson = require(path.resolve(appDirectory, 'package.json'));
+
+
+const srcDir = path.resolve(appDirectory, 'src');
+const configDir = path.resolve(appDirectory, 'config');
+
 async function getVariants() {
 	return new Promise(function(resolve, reject) {
 		glob('./variants/*.@(js|scss)', { cwd: srcDir }, function(er, files) {
@@ -22,11 +28,33 @@ async function getVariants() {
 					}
 					acc[baseName].push({
 						ext,
-						filePath: path.relative(__dirname, filePath).replace(/\\/gmi, '/')
+						filePath: path.relative(appDirectory, filePath).replace(/\\/gim, '/')
 					});
 					return acc;
 				}, {});
 				resolve(variants);
+			} else {
+				// console.log(chalk.red(`Variant ${variant} dosn't exist: Can't find "${variant}.js" or "${variant}.scss"`));
+				resolve([]);
+			}
+		});
+	});
+}
+async function getGlobalScripts() {
+	return new Promise(function(resolve, reject) {
+		glob('./global/*.@(js)', { cwd: srcDir }, function(er, files) {
+			if (files.length > 0) {
+				const campaignFiles = files.map(function(file) {
+					var filePath = path.resolve(srcDir, file);
+					var ext = path.extname(filePath).substring(1);
+					var name = path.basename(filePath, path.extname(filePath));
+					return {
+						ext,
+						filePath: path.relative(appDirectory, filePath).replace(/\\/gim, '/'),
+						name
+					};
+				});
+				resolve(campaignFiles);
 			} else {
 				// console.log(chalk.red(`Variant ${variant} dosn't exist: Can't find "${variant}.js" or "${variant}.scss"`));
 				resolve([]);
@@ -45,7 +73,7 @@ async function getCampaignScripts() {
 					var name = path.basename(filePath, path.extname(filePath));
 					return {
 						ext,
-						filePath: path.relative(__dirname, filePath).replace(/\\/gmi, '/'),
+						filePath: path.relative(appDirectory, filePath).replace(/\\/gim, '/'),
 						name
 					};
 				});
@@ -62,26 +90,29 @@ async function generateVariant(variant, variantFiles) {
 	console.log(`Generating ${variant}`);
 
 	let campaign = packageJson.name;
-	if (packageJson['maxymiser-workflow'] && packageJson['maxymiser-workflow'].campaign){
+	if (packageJson['maxymiser-workflow'] && packageJson['maxymiser-workflow'].campaign) {
 		campaign = packageJson['maxymiser-workflow'].campaign;
 	}
+
+	let globalFiles = await getGlobalScripts();
 
 	let campaignFiles = await getCampaignScripts();
 
 	var options = {
+		globalFiles,
 		campaign: campaign,
 		campaignFiles: campaignFiles,
 		variant,
 		variantFiles
 	};
 
-	return fs.writeFileSync(path.resolve(__dirname, 'replace_cg_v5.js'), template(options));
+	return fs.writeFileSync(path.resolve(configDir, 'replace_cg_v5.js'), template(options));
 }
 
 async function main(variant) {
 	const variants = await getVariants();
 
-	if (variants.length === 0){
+	if (variants.length === 0) {
 		console.log(chalk.red('No variants exist'));
 		return;
 	}
@@ -101,10 +132,11 @@ async function main(variant) {
 	}
 }
 
-main(args[0]);
-
-// if(variant){
-
-// }else{
-// 	console.log(chalk.red('please provide a variant name'));
-// }
+const args = process.argv.slice(2);
+const argv = require('minimist')(args, {
+	string: ['variant'],
+	alias: {
+		v: 'variant'
+	}
+});
+main(argv.variant);

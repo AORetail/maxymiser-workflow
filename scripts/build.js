@@ -7,11 +7,27 @@ const mkdirp = require('mkdirp');
 const path = require('path');
 const postcss = require('postcss');
 const sass = require('node-sass');
-const sassSettings = require('../config/scss-settings');
+
+const appDirectory = fs.realpathSync(process.cwd());
+const scssSettings = require(appDirectory + '/config/scss-settings');
+
+const babelOptions = {
+	babelrc: false,
+	plugins: [require('babel-plugin-preval')],
+	presets: [
+		[
+			require('babel-preset-env'),
+			{
+				modules: false
+			}
+		]
+	]
+};
 
 
-const srcDir = path.resolve(__dirname, '../src');
-const distDir = path.resolve(__dirname, '../dist');
+
+const srcDir = path.resolve(appDirectory, 'src');
+const distDir = path.resolve(appDirectory, 'dist');
 
 glob('**/*.js', { cwd: srcDir }, function(er, files) {
 	files.forEach(function(file) {
@@ -42,7 +58,7 @@ glob('**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
 		var filePath = path.resolve(srcDir, file);
 		var compiledCss = sass.renderSync(Object.assign({
 			file: filePath
-		}, sassSettings)).css.toString();
+		}, scssSettings)).css.toString();
 
 		var processedCss = processor.process(compiledCss).css;
 

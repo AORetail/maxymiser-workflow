@@ -15,6 +15,7 @@ npm run init
 | `-f`, `--force` |Forces copying of initial files. |
 | `-c`, `--campaign` | Campaign name (will default to package name). |
 
+
 ## To generate the file
 ```
 npm run generate

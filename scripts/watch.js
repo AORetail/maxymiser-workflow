@@ -4,10 +4,15 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const chalk = require('chalk');
 const rootPath = path.resolve('.');
-const watchDir = path.resolve(__dirname, '../src');
-const srcFile = path.resolve(__dirname, './replace_cg_v5.js');
-const outFile = path.resolve(__dirname, `../dist/${path.basename(srcFile)}`);
+
+const appDirectory = fs.realpathSync(process.cwd());
+
+const watchDir = path.resolve(appDirectory, 'src');
+const srcFile = path.resolve(appDirectory, './config/replace_cg_v5.js');
+const outFile = path.resolve(appDirectory, `./dist/${path.basename(srcFile)}`);
 const relativeOutFile = path.relative(rootPath, outFile);
+
+const babelOptions = require('../config/babel.config');
 
 console.log(chalk.green('Watching', path.relative(rootPath, watchDir)));
 
@@ -16,12 +21,12 @@ let changedFiles = new Set();
 
 async function generateFile(){
 	return new Promise(function(resolve, reject){
-		var output = babel.transformFileSync(srcFile).code;
+		var output = babel.transformFileSync(srcFile, babelOptions);
 		mkdirp(path.dirname(outFile), function(writeErr) {
 			if (writeErr) {
 				console.log(chalk.red(outFile, writeErr));
 			} else {
-				fs.writeFileSync(outFile, output);
+				fs.writeFileSync(outFile, output.code);
 				console.log(chalk.green(`File written: "${relativeOutFile}"`));
 			}
 			timeout = false;
