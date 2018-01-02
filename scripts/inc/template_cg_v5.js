@@ -1,14 +1,22 @@
-function template({ campaign, campaignFiles, variant, variantFiles, globalFiles = [] }) {
+function template({
+	campaign,
+	campaignFiles,
+	variant,
+	variantFiles,
+	globalFiles = [],
+	config = {}
+}) {
 	var orderIndex = 0;
+	var orderMap = config.orderMap || {};
 
-	globalFiles = globalFiles.map(function({ name, filePath, ext }, index){
+	globalFiles = globalFiles.map(function({ name, filePath, ext }, index) {
 		return `
 			{
 				Name: '${name}',
 				Type: 'script',
 				Attrs: { type: 'text/javascript' },
 				Data:preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
-				Order: ${-50 * (globalFiles.length - index - 1)},
+				Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : -50 * (globalFiles.length - index - 1)},
 				HighLevelApiVersion: '1.6'
 			}`;
 	});
@@ -22,7 +30,7 @@ function template({ campaign, campaignFiles, variant, variantFiles, globalFiles 
 						Type: 'script',
 						Attrs: { type: 'text/javascript' },
 						Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
-						Order: ${orderIndex++},
+						Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : orderIndex++},
 						HighLevelApiVersion: '1.6'
 					}`;
 			}
@@ -50,7 +58,7 @@ function template({ campaign, campaignFiles, variant, variantFiles, globalFiles 
 
 			return '';
 		})
-		.filter(function(str){
+		.filter(function(str) {
 			return str !== '';
 		})
 		.join(',\n');
@@ -74,7 +82,7 @@ function template({ campaign, campaignFiles, variant, variantFiles, globalFiles 
 						HTMLId: 'Element1',
 						Data: [${variantFiles}
 						],
-						Order: ${orderIndex++}
+						Order: ${orderMap.hasOwnProperty(variant) ? orderMap[name] : orderIndex++}
 					}
 				],
 				Recommendations: []
@@ -82,10 +90,10 @@ function template({ campaign, campaignFiles, variant, variantFiles, globalFiles 
 		],
 		MRRules: [],
 		PersistData: [],
-		SiteInfo: [{ Url: 'ao.com', ID: 993 }],
+		SiteInfo: ${JSON.stringify(config.SiteInfo || [{ Url: 'your-domain.com', ID: 0 }])},
 		SystemData: [{ Version: '1.0', RequestId: 0, ResponseId: 346 }],
 		GenInfo: {
-			SamsungTradeUpBlock: { element1: 'blockpositionone' }
+			'${campaign}': { element1: '${variant}' }
 		},
 		ServerAttributes: {},
 		Iteration: 'PFhWBOh_hVlzcx_qg-Ifq5OS0vw',

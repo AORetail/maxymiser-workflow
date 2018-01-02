@@ -24,8 +24,6 @@ const babelOptions = {
 	]
 };
 
-
-
 const srcDir = path.resolve(appDirectory, 'src');
 const distDir = path.resolve(appDirectory, 'dist');
 
@@ -33,8 +31,8 @@ glob('**/*.js', { cwd: srcDir }, function(er, files) {
 	files.forEach(function(file) {
 		var filePath = path.resolve(srcDir, file);
 		// console.log(chalk.blue(filePath));
-		babel.transformFile(filePath, {}, function(err, result) {
-			if (err){
+		babel.transformFile(filePath, babelOptions, function(err, result) {
+			if (err) {
 				console.log(chalk.red(filePath, err));
 			} else {
 				var outFile = path.resolve(distDir, file);
@@ -42,7 +40,9 @@ glob('**/*.js', { cwd: srcDir }, function(er, files) {
 					if (writeErr) {
 						console.log(chalk.red(filePath, writeErr));
 					} else {
-						console.log(chalk.green(`Writing: ${file} → ${path.basename(outFile)}`));
+						console.log(
+							chalk.green(`Writing: ${file} → ${path.basename(outFile)}`)
+						);
 						fs.writeFileSync(outFile, result.code);
 					}
 				});
@@ -56,9 +56,16 @@ glob('**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
 
 	files.forEach(function(file) {
 		var filePath = path.resolve(srcDir, file);
-		var compiledCss = sass.renderSync(Object.assign({
-			file: filePath
-		}, scssSettings)).css.toString();
+		var compiledCss = sass
+			.renderSync(
+				Object.assign(
+					{
+						file: filePath
+					},
+					scssSettings
+				)
+			)
+			.css.toString();
 
 		var processedCss = processor.process(compiledCss).css;
 
@@ -67,7 +74,9 @@ glob('**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
 			if (writeErr) {
 				console.log(chalk.red(filePath, writeErr));
 			} else {
-				console.log(chalk.green(`Writing: ${file} → ${path.basename(outFile)}`));
+				console.log(
+					chalk.green(`Writing: ${file} → ${path.basename(outFile)}`)
+				);
 				fs.writeFileSync(outFile, processedCss);
 			}
 		});

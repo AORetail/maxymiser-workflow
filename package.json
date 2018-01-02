@@ -1,8 +1,7 @@
 {
   "name": "maxymiser-workflow",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Scripts to improve workfow with Maxymiser",
   "engines": {
     "node": ">=6"
   },
@@ -16,21 +15,26 @@
   "bin": {
     "maxymiser-workflow": "./bin/maxymiser-workflow.js"
   },
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.js"
+  },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "autoprefixer": "^7.1.6",
+    "autoprefixer": "^7.2.4",
     "babel": "^6.23.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-preval": "^1.6.2",
     "babel-preset-env": "^1.6.1",
     "chalk": "^2.3.0",
-    "eslint": "^4.10.0",
+    "eslint": "^4.14.0",
     "eslint-config-ao": "0.0.1-rc.3",
     "glob": "^7.1.2",
+    "inquirer": "^4.0.1",
+    "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
-    "node-sass": "^4.6.0",
-    "postcss": "^6.0.14"
+    "node-sass": "^4.7.2",
+    "postcss": "^6.0.15"
   },
   "browserlist": [
     "last 2 versions",
@@ -38,8 +42,5 @@
     "ios_saf >= 8",
     "Android >= 4.3",
     "> 1%"
-  ],
-  "devDependencies": {
-    "minimist": "^1.2.0"
-  }
+  ]
 }
