@@ -25,7 +25,10 @@ async function getVariants() {
 					const variants = files.reduce(function(acc, file) {
 						var filePath = path.resolve(srcDir, file);
 						var ext = path.extname(filePath).substring(1);
-						var baseName = path.basename(filePath, path.extname(filePath));
+						var baseName = path.basename(
+							filePath,
+							path.extname(filePath)
+						);
 						if (!acc.hasOwnProperty(baseName)) {
 							acc[baseName] = [];
 						}
@@ -58,7 +61,10 @@ async function getGlobalScripts() {
 					const campaignFiles = files.map(function(file) {
 						let filePath = path.resolve(srcDir, file);
 						let ext = path.extname(filePath).substring(1);
-						let name = path.basename(filePath, path.extname(filePath));
+						let name = path.basename(
+							filePath,
+							path.extname(filePath)
+						);
 						return {
 							ext,
 							filePath: path
@@ -89,7 +95,10 @@ async function getCampaignScripts() {
 					const campaignFiles = files.map(function(file) {
 						var filePath = path.resolve(srcDir, file);
 						var ext = path.extname(filePath).substring(1);
-						var name = path.basename(filePath, path.extname(filePath));
+						var name = path.basename(
+							filePath,
+							path.extname(filePath)
+						);
 						return {
 							ext,
 							filePath: path
@@ -218,7 +227,6 @@ async function promptUser() {
 
 		let includeCss = answers.includeCss;
 
-
 		if (includeCss) {
 			let cssFilePath = path.resolve(srcDir, `variants/${variant}.scss`);
 			fs.writeFileSync(cssFilePath, '');
@@ -231,10 +239,7 @@ async function promptUser() {
 		}
 
 		let jsFilePath = path.resolve(srcDir, `variants/${variant}.js`);
-		fs.writeFileSync(
-			jsFilePath,
-			includeCss ? 'dom.addCss(css);' : ''
-		);
+		fs.writeFileSync(jsFilePath, includeCss ? 'dom.addCss(css);' : '');
 
 		variants[variant].push({
 			ext: 'js',
@@ -271,7 +276,7 @@ const argv = minimist(args, {
 	}
 });
 
-if (argv.help){
+if (argv.help) {
 	console.log(helpText);
 } else if (argv.auto || argv.variant) {
 	generateFromArgs(argv.variant);

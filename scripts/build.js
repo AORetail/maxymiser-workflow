@@ -41,7 +41,9 @@ glob('**/*.js', { cwd: srcDir }, function(er, files) {
 						console.log(chalk.red(filePath, writeErr));
 					} else {
 						console.log(
-							chalk.green(`Writing: ${file} → ${path.basename(outFile)}`)
+							chalk.green(
+								`Writing: ${file} → ${path.basename(outFile)}`
+							)
 						);
 						fs.writeFileSync(outFile, result.code);
 					}

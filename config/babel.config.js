@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const appPkg = require(appDirectory + '/package.json');

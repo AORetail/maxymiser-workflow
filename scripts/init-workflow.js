@@ -20,8 +20,15 @@ Options:
   -c, --campaign  Campaign name (will default to package name).
 `;
 
-function spawnGenerate(variant){
-	const result = spawn.sync('node', [path.resolve(__dirname, './generate'), variant ? `--variant=${variant}` : '--auto'], { stdio: 'inherit', cwd: appDirectory });
+function spawnGenerate(variant) {
+	const result = spawn.sync(
+		'node',
+		[
+			path.resolve(__dirname, './generate'),
+			variant ? `--variant=${variant}` : '--auto'
+		],
+		{ stdio: 'inherit', cwd: appDirectory }
+	);
 	if (result.signal) {
 		if (result.signal === 'SIGKILL') {
 			console.log(
@@ -41,7 +48,7 @@ function spawnGenerate(variant){
 }
 
 async function main(argv) {
-	if (argv.help){
+	if (argv.help) {
 		console.log(helpText);
 	} else {
 		updatePakageScripts(appDirectory);
@@ -56,7 +63,7 @@ async function main(argv) {
 		fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
 
 		let variant;
-		if (!argv.template && !argv.force){
+		if (!argv.template && !argv.force) {
 			let variants = await extract();
 			if (variants.length > 0) {
 				variant = variants[0];

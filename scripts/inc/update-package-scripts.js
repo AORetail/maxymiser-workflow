@@ -26,8 +26,15 @@ function updatePackageScripts(appDirectory) {
 			if (!scripts.hasOwnProperty(prop)) {
 				console.log(chalk.green(`Adding script: "${prop}"`));
 				scripts[prop] = workflowScripts[prop];
-			} else if (scripts[prop] !== workflowScripts[prop] && !scripts.hasOwnProperty(altScriptName)) {
-				console.log(chalk.green(`Adding script: "${altScriptName}" ("${prop}" already in use)`));
+			} else if (
+				scripts[prop] !== workflowScripts[prop] &&
+				!scripts.hasOwnProperty(altScriptName)
+			) {
+				console.log(
+					chalk.green(
+						`Adding script: "${altScriptName}" ("${prop}" already in use)`
+					)
+				);
 				scripts[altScriptName] = workflowScripts[prop];
 			}
 		});

@@ -1,11 +1,13 @@
 {
-	"root": true,
+  "root": true,
 	"env": {
 		"node": true,
 		"es6": true
 	},
 	"globals": {
-		"module": true
+    "module": true,
+    "dom": true,
+    "css": true
 	},
 	"rules": {
 		"no-console": "off"

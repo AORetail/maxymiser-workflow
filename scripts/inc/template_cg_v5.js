@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 function template({
 	campaign,
 	campaignFiles,
@@ -16,7 +18,11 @@ function template({
 				Type: 'script',
 				Attrs: { type: 'text/javascript' },
 				Data:preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
-				Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : -50 * (globalFiles.length - index - 1)},
+				Order: ${
+	orderMap.hasOwnProperty(name)
+		? orderMap[name]
+		: -50 * (globalFiles.length - index - 1)
+},
 				HighLevelApiVersion: '1.6'
 			}`;
 	});
@@ -90,7 +96,9 @@ function template({
 		],
 		MRRules: [],
 		PersistData: [],
-		SiteInfo: ${JSON.stringify(config.SiteInfo || [{ Url: 'your-domain.com', ID: 0 }])},
+		SiteInfo: ${JSON.stringify(
+		config.SiteInfo || [{ Url: 'your-domain.com', ID: 0 }]
+	)},
 		SystemData: [{ Version: '1.0', RequestId: 0, ResponseId: 346 }],
 		GenInfo: {
 			'${campaign}': { element1: '${variant}' }

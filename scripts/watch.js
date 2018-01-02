@@ -19,8 +19,8 @@ console.log(chalk.green('Watching', path.relative(rootPath, watchDir)));
 let timeout = false;
 let changedFiles = new Set();
 
-async function generateFile(){
-	return new Promise(function(resolve, reject){
+async function generateFile() {
+	return new Promise(function(resolve, reject) {
 		var output = babel.transformFileSync(srcFile, babelOptions);
 		mkdirp(path.dirname(outFile), function(writeErr) {
 			if (writeErr) {
@@ -41,9 +41,12 @@ generateFile();
 
 let srcfileChanged = false;
 fs.watch(srcFile, {}, async (eventType, filename) => {
-	if (!srcfileChanged && eventType === 'change'){
+	if (!srcfileChanged && eventType === 'change') {
 		srcfileChanged = true;
-		const filePath = path.relative(rootPath, path.resolve(watchDir, filename));
+		const filePath = path.relative(
+			rootPath,
+			path.resolve(watchDir, filename)
+		);
 		console.log(chalk.cyan(`File changed: "${filePath}"`));
 		await generateFile();
 		srcfileChanged = false;
@@ -52,18 +55,22 @@ fs.watch(srcFile, {}, async (eventType, filename) => {
 
 fs.watch(watchDir, {}, (eventType, filename) => {
 	const filePath = path.relative(rootPath, path.resolve(watchDir, filename));
-	if (eventType === 'change'){
+	if (eventType === 'change') {
 		if (filename) {
-			if (!changedFiles.has(filename)){
+			if (!changedFiles.has(filename)) {
 				changedFiles.add(filename);
 				console.log(chalk.cyan(`File changed: "${filePath}"`));
 			}
-			if (!timeout){
-				console.log(chalk.cyan(`Queue file generation: "${relativeOutFile}"`));
+			if (!timeout) {
+				console.log(
+					chalk.cyan(`Queue file generation: "${relativeOutFile}"`)
+				);
 				timeout = setTimeout(generateFile, 500);
 			}
 		}
 	} else {
-		console.log(chalk.red(`Error: eventType="${eventType}" filename="${filename}"`));
+		console.log(
+			chalk.red(`Error: eventType="${eventType}" filename="${filename}"`)
+		);
 	}
 });

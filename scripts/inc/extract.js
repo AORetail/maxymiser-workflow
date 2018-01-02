@@ -16,8 +16,8 @@ const configDir = path.resolve(appDirectory, 'config');
  *
  * @param {string} url
  */
-async function extractFromUrl(url){
-	return new Promise(function(resolve, reject){
+async function extractFromUrl(url) {
+	return new Promise(function(resolve, reject) {
 		var request = http.get(url, function(res) {
 			var body = '';
 
@@ -25,11 +25,11 @@ async function extractFromUrl(url){
 				reject('Response status was ' + res.statusCode);
 			}
 
-			res.on('data', function(chunk){
+			res.on('data', function(chunk) {
 				body += chunk;
 			});
 
-			res.on('end', function(){
+			res.on('end', function() {
 				const st = 'mmRequestCallbacks[0]('.length;
 				const ed = body.length - ');'.length;
 				body = body.substring(st, ed);
@@ -37,19 +37,25 @@ async function extractFromUrl(url){
 			});
 		});
 
-		request.on('error', function(err){
+		request.on('error', function(err) {
 			reject(err);
 		});
 	});
 }
 
-function writeFile(outFile, contents){
-	return new Promise(function(resolve, reject){
+function writeFile(outFile, contents) {
+	return new Promise(function(resolve, reject) {
 		mkdirp(path.dirname(outFile), function(writeErr) {
 			if (writeErr) {
-				console.log(chalk.red(path.relative(appDirectory, outFile), writeErr));
+				console.log(
+					chalk.red(path.relative(appDirectory, outFile), writeErr)
+				);
 			} else {
-				console.log(chalk.green(`Writing: ${path.relative(appDirectory, outFile)}`));
+				console.log(
+					chalk.green(
+						`Writing: ${path.relative(appDirectory, outFile)}`
+					)
+				);
 				fs.writeFileSync(outFile, contents);
 			}
 			resolve();
@@ -60,7 +66,7 @@ function writeFile(outFile, contents){
 /**
  * Interactive extraction of assets from file.
  */
-async function extract(){
+async function extract() {
 	const configFile = path.resolve(configDir, 'maxymiser-workflow.json');
 	const configData = require(configFile);
 
@@ -70,14 +76,18 @@ async function extract(){
 		{
 			name: 'url',
 			type: 'input',
-			message: 'Url to extract from' + (configData.extractUrl ? ' (leave empty to use last)' : ''),
-			validate: function(val){
+			message:
+				'Url to extract from' +
+				(configData.extractUrl ? ' (leave empty to use last)' : ''),
+			validate: function(val) {
 				const validExp = /^https?:\/\/service\.maxymiser\.net\/cg\/v5\//;
 				console.log(val, validExp.test(val));
-				if (val.length && !validExp.test(val)){
+				if (val.length && !validExp.test(val)) {
 					return 'URL Must match https?://service.maxymiser.net/cg/v5/';
 				}
-				return val.length || configData.extractUrl ? true : 'Please enter a url';
+				return val.length || configData.extractUrl
+					? true
+					: 'Please enter a url';
 			}
 		}
 	]);
@@ -87,12 +97,12 @@ async function extract(){
 
 	const resp = await extractFromUrl(url);
 
-	if (!configData.hasOwnProperty('ordermap')){
+	if (!configData.hasOwnProperty('ordermap')) {
 		configData.orderMap = {};
 	}
 
 	let campaignList = resp.Campaigns.map(x => x.Name);
-	if (campaignList.indexOf(campaign) === -1){
+	if (campaignList.indexOf(campaign) === -1) {
 		answers = await inquirer.prompt([
 			{
 				name: 'campaign',
@@ -107,7 +117,7 @@ async function extract(){
 
 	const allFilePromises = [];
 
-	resp.Scripts.forEach(function(sc){
+	resp.Scripts.forEach(function(sc) {
 		const { Name: name, Data: data, Order: order } = sc;
 
 		configData.orderMap[name] = order;
@@ -117,22 +127,25 @@ async function extract(){
 
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
-	if (camp){
-		camp.Scripts.forEach(function(sc){
+	if (camp) {
+		camp.Scripts.forEach(function(sc) {
 			const { Name: name, Data: data, Order: order } = sc;
 			// console.dir(data);
 			configData.orderMap[name] = order;
 			const outFile = path.resolve(srcDir, `campaignScripts/${name}.js`);
 			allFilePromises.push(writeFile(outFile, data));
 		});
-		camp.Elements.forEach(function(element){
+		camp.Elements.forEach(function(element) {
 			let variant = element.VariantName;
 			variants.push(variant);
-			element.Data.forEach(function(d){
+			element.Data.forEach(function(d) {
 				let type = d.Type.toLowerCase();
-				if (type === 'script' || type === 'css'){
+				if (type === 'script' || type === 'css') {
 					let ext = type === 'css' ? 'scss' : 'js';
-					const outFile = path.resolve(srcDir, `variants/${variant}.${ext}`);
+					const outFile = path.resolve(
+						srcDir,
+						`variants/${variant}.${ext}`
+					);
 					allFilePromises.push(writeFile(outFile, d.Data));
 				}
 			});
@@ -140,16 +153,15 @@ async function extract(){
 	}
 
 	configData.SiteInfo = resp.SiteInfo;
-	allFilePromises.push(writeFile(configFile, JSON.stringify(configData, null, 2)));
+	allFilePromises.push(
+		writeFile(configFile, JSON.stringify(configData, null, 2))
+	);
 
-	return new Promise(function(resolve, reject){
-
+	return new Promise(function(resolve, reject) {
 		Promise.all(allFilePromises).then(() => {
 			resolve(variants);
 		});
 	});
-
 }
-
 
 module.exports = extract;
