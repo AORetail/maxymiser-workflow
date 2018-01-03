@@ -8,6 +8,10 @@
     "module": true,
     "dom": true,
     "css": true
+  },
+  "parserOptions": {
+		"ecmaVersion": 2017,
+		"sourceType": "module"
 	},
 	"rules": {
 		"no-console": "off"

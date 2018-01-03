@@ -53,7 +53,7 @@ fs.watch(srcFile, {}, async (eventType, filename) => {
 	}
 });
 
-fs.watch(watchDir, {}, (eventType, filename) => {
+fs.watch(watchDir, { recursive: true }, (eventType, filename) => {
 	const filePath = path.relative(rootPath, path.resolve(watchDir, filename));
 	if (eventType === 'change') {
 		if (filename) {

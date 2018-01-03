@@ -53,7 +53,7 @@ glob('**/*.js', { cwd: srcDir }, function(er, files) {
 	});
 });
 
-glob('**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
+glob('variants/**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
 	var processor = postcss([autoprefixer]);
 
 	files.forEach(function(file) {

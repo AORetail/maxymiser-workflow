@@ -4,7 +4,7 @@ A mechanism to speed up maxymiser test development without having to copy-paste-
 
 ## To Initialise
 
-```
+```shell-script
 npm i maxymiser-workflow
 
 npm run init-workflow
@@ -21,7 +21,7 @@ npm run init-workflow
 
 ## To extract from a URL
 
-```
+```shell-script
 npm run extract
 ```
 
@@ -30,7 +30,7 @@ You will need the full URL of `//service.maxymiser.net/cg/v5/` get this from the
 
 ## To generate the file
 
-```
+```shell-script
 npm run generate
 npm run generate -- --variant=variant-name
 ```
@@ -46,7 +46,7 @@ If `--auto` is use it the generate for the first variant it finds.
 
 ## To dev
 
-```
+```shell-script
 npm run watch
 ```
 
@@ -59,7 +59,7 @@ to
 
 ## To Build
 
-```
+```shell-script
 npm run build
 ```
 

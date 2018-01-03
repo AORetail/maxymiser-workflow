@@ -86,7 +86,7 @@ async function getGlobalScripts() {
 async function getCampaignScripts() {
 	return new Promise(function(resolve, reject) {
 		glob(
-			'./campaignScripts/*.@(js|scss)',
+			'./campaignScripts/*.@(js)',
 			{
 				cwd: srcDir
 			},
