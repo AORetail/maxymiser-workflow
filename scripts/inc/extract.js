@@ -117,6 +117,7 @@ async function extract() {
 
 	const allFilePromises = [];
 
+	// Global scripts
 	resp.Scripts.forEach(function(sc) {
 		const { Name: name, Data: data, Order: order } = sc;
 
@@ -125,6 +126,7 @@ async function extract() {
 		allFilePromises.push(writeFile(outFile, data));
 	});
 
+	// Get variants of requested campaign
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
 	if (camp) {

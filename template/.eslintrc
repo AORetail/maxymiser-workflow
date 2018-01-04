@@ -2,12 +2,15 @@
   "root": true,
 	"env": {
 		"node": true,
-		"es6": true
+    "es6": true,
+    "browser": true
 	},
 	"globals": {
-    "module": true,
+    "modules": true,
     "dom": true,
-    "css": true
+    "css": true,
+    "site": true,
+    "renderer": true
   },
   "parserOptions": {
 		"ecmaVersion": 2017,

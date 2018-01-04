@@ -26,6 +26,12 @@ function getTemplateFiles() {
 async function copyTemplateFiles(appDirectory, options) {
 	const files = await getTemplateFiles();
 
+	/*
+	TODO: Make this a bit smarter. Merge/Update files?
+	i.e. Readme.md should only update it's section or append to current readme.md if it exists.
+	.eslintrc, config/* should merge.
+	*/
+
 	let populateDirs = new Set();
 	populateDirs.add(appDirectory);
 	let filesToWrite = new Set();

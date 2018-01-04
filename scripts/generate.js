@@ -1,3 +1,8 @@
+/**
+ * This script will generate the `replace_cg_v5.js` file for a given variant.
+ * use `--help` for more info.
+ */
+
 const chalk = require('chalk');
 const fs = require('fs');
 const glob = require('glob');
@@ -49,6 +54,7 @@ async function getVariants() {
 		);
 	});
 }
+
 async function getGlobalScripts() {
 	return new Promise(function(resolve, reject) {
 		glob(
@@ -117,6 +123,11 @@ async function getCampaignScripts() {
 	});
 }
 
+/**
+ * Collates relevant files to be injected into `template_cg_v5.js` to generate `replace_cg_v5.js`
+ * @param {string} variant Variant Name
+ * @param {Array <string>} variantFiles Array of variant files.
+ */
 async function generateVariant(variant, variantFiles) {
 	console.log(chalk.blue(`Generating ${variant}`));
 

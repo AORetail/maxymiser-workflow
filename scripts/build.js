@@ -11,18 +11,7 @@ const sass = require('node-sass');
 const appDirectory = fs.realpathSync(process.cwd());
 const scssSettings = require(appDirectory + '/config/scss-settings');
 
-const babelOptions = {
-	babelrc: false,
-	plugins: [require('babel-plugin-preval')],
-	presets: [
-		[
-			require('babel-preset-env'),
-			{
-				modules: false
-			}
-		]
-	]
-};
+const babelOptions = require('../config/babel.config');
 
 const srcDir = path.resolve(appDirectory, 'src');
 const distDir = path.resolve(appDirectory, 'dist');

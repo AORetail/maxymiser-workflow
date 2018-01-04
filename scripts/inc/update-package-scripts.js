@@ -4,6 +4,7 @@ const chalk = require('chalk');
 
 /**
  * Update package.json with required scripts
+ * if the `script` already exists and is different from what would be written `maxymiser-workflow-script` will be used instead.
  */
 function updatePackageScripts(appDirectory) {
 	const appPkgPath = path.resolve(appDirectory, 'package.json');
