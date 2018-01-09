@@ -2,6 +2,7 @@
   "name": "maxymiser-workflow",
   "version": "1.0.0",
   "description": "Scripts to improve workfow with Maxymiser",
+  "repository": "AORetail/maxymiser-workflow",
   "engines": {
     "node": ">=6"
   },
@@ -28,6 +29,8 @@
     "babel-plugin-preval": "^1.6.2",
     "babel-preset-env": "^1.6.1",
     "chalk": "^2.3.0",
+    "cross-spawn": "^5.1.0",
+    "deepmerge": "^2.0.1",
     "glob": "^7.1.2",
     "inquirer": "^4.0.1",
     "minimist": "^1.2.0",
@@ -50,4 +53,3 @@
     "> 1%"
   ]
 }
-

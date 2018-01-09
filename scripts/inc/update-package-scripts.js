@@ -19,6 +19,7 @@ function updatePackageScripts(appDirectory) {
 			'init-workflow': 'maxymiser-workflow init-workflow',
 			generate: 'maxymiser-workflow generate',
 			watch: 'maxymiser-workflow watch',
+			extract: 'maxymiser-workflow extract',
 			build: 'maxymiser-workflow build'
 		};
 		let scripts = appPkg.scripts;

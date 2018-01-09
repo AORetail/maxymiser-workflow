@@ -8,24 +8,38 @@ function template({
 	globalFiles = [],
 	config = {}
 }) {
-	var orderIndex = 0;
-	var orderMap = config.orderMap || {};
+	let orderIndex = 0;
+	let orderMap = config.orderMap || {};
 
-	globalFiles = globalFiles.map(function({ name, filePath, ext }, index) {
-		return `
+	if (!config.hasOwnProperty('globalUnextracted')){
+		config.globalUnextracted = {};
+	}
+
+	let globalUnextracted = Object.entries(config.globalUnextracted).map(a => ({
+		name: a[0],
+		data: JSON.stringify(a[1])
+	}));
+
+	globalFiles = globalFiles
+		.filter(({ name }) => !config.globalUnextracted.hasOwnProperty(name))
+		.map(d => {
+			d.data = `preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${d.filePath}")\``;
+			return d;
+		});
+
+	globalFiles = globalUnextracted
+		.concat(globalFiles)
+		.map(function({ name, data }, index) {
+			return `
 			{
 				Name: '${name}',
 				Type: 'script',
 				Attrs: { type: 'text/javascript' },
-				Data:preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
-				Order: ${
-	orderMap.hasOwnProperty(name)
-		? orderMap[name]
-		: -50 * (globalFiles.length - index - 1)
-},
+				Data:${data},
+				Order: ${ orderMap.hasOwnProperty(name) ? orderMap[name] : -50 * (globalFiles.length - index - 1)},
 				HighLevelApiVersion: '1.6'
 			}`;
-	});
+		});
 
 	campaignFiles = campaignFiles
 		.map(function({ name, filePath, ext }) {
@@ -97,8 +111,8 @@ function template({
 		MRRules: [],
 		PersistData: [],
 		SiteInfo: ${JSON.stringify(
-		config.SiteInfo || [{ Url: 'your-domain.com', ID: 0 }]
-	)},
+			config.SiteInfo || [{ Url: 'your-domain.com', ID: 0 }]
+		)},
 		SystemData: [{ Version: '1.0', RequestId: 0, ResponseId: 346 }],
 		GenInfo: {
 			'${campaign}': { element1: '${variant}' }

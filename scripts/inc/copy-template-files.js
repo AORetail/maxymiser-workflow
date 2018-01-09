@@ -3,6 +3,7 @@ const path = require('path');
 const chalk = require('chalk');
 const glob = require('glob');
 const mkdirp = require('mkdirp');
+const merge = require('deepmerge');
 
 const templateDirectory = path.resolve(__dirname, '../../template');
 
@@ -20,17 +21,98 @@ function getTemplateFiles() {
 	});
 }
 
+function readJson(file){
+	let data = {};
+	try {
+		data = JSON.parse(fs.readFileSync(file));
+		// eslint-disable-next-line no-empty
+	} catch (e){
+	}
+
+	return data;
+}
+
+function mergeJson(file, inFile, outFile){
+	return new Promise(function(resolve){
+		console.log(chalk.blue(`Merging ${file}`));
+		let inData = readJson(inFile);
+		let outData = readJson(outFile);
+		let data = merge(outData, inData);
+		let inFileContents = JSON.stringify(data, null, 2);
+
+		mkdirp(path.dirname(outFile), function(writeErr) {
+			if (writeErr) {
+				console.log(chalk.red(outFile, writeErr));
+			} else {
+				fs.writeFileSync(outFile, inFileContents);
+			}
+			resolve();
+		});
+	});
+}
+
+function mergeMarkdown(file, inFile, outFile){
+	return new Promise(function(resolve){
+		console.log(chalk.blue(`Merging ${file}`));
+		let inFileContents = fs.readFileSync(inFile).toString();
+		let outFileContents = fs.readFileSync(outFile).toString();
+		let contentToWrite = inFileContents;
+
+		let regExp = /<!-- maxymiser-workflow start -->[\s\S]*<!-- maxymiser-workflow end -->\s*/m;
+
+		if (regExp.test(outFileContents)){
+			contentToWrite = outFileContents.replace(regExp, inFileContents);
+		} else {
+			contentToWrite = outFileContents + '\n' + inFileContents;
+		}
+
+		mkdirp(path.dirname(outFile), function(writeErr) {
+			if (writeErr) {
+				console.log(chalk.red(outFile, writeErr));
+			} else {
+				fs.writeFileSync(outFile, contentToWrite);
+			}
+			resolve();
+		});
+	});
+}
+
+const mergeNameMap = {
+	'.eslintrc': mergeJson
+};
+
+const mergeExtMap = {
+	'.json': mergeJson,
+	'.md': mergeMarkdown
+};
+
+function getMergeFunction(file){
+	let ext = path.extname(file).toLowerCase();
+	let basename = path.basename(file);
+	return mergeNameMap[basename] || mergeExtMap[ext];
+}
+
+function copyFile(file, inFile, outFile){
+	return new Promise(function(resolve) {
+		console.log(chalk.blue(`Copying ${file}`));
+		var inFileContents = fs.readFileSync(inFile);
+		mkdirp(path.dirname(outFile), function(writeErr) {
+			if (writeErr) {
+				console.log(chalk.red(outFile, writeErr));
+			} else {
+				fs.writeFileSync(outFile, inFileContents);
+			}
+			resolve();
+		});
+	});
+}
+
+
 /**
  * Copy template files over. Only populate empty or missing directories
  */
 async function copyTemplateFiles(appDirectory, options) {
 	const files = await getTemplateFiles();
-
-	/*
-	TODO: Make this a bit smarter. Merge/Update files?
-	i.e. Readme.md should only update it's section or append to current readme.md if it exists.
-	.eslintrc, config/* should merge.
-	*/
 
 	let populateDirs = new Set();
 	populateDirs.add(appDirectory);
@@ -69,17 +151,22 @@ async function copyTemplateFiles(appDirectory, options) {
 			return new Promise(function(resolve) {
 				var inFile = path.resolve(templateDirectory, file);
 				var outFile = path.resolve(appDirectory, file);
-
-				console.log(chalk.blue(`Copying ${file}`));
-				var inFileContents = fs.readFileSync(inFile);
-				mkdirp(path.dirname(outFile), function(writeErr) {
-					if (writeErr) {
-						console.log(chalk.red(outFile, writeErr));
-					} else {
-						fs.writeFileSync(outFile, inFileContents);
-					}
-					resolve();
-				});
+				let mergeFn = !options.force && fs.existsSync(outFile) && getMergeFunction(inFile);
+				if (mergeFn){
+					mergeFn(file, inFile, outFile).then(resolve);
+				} else {
+					copyFile(file, inFile, outFile).then(resolve);
+					// console.log(chalk.blue(`Copying ${file}`));
+					// var inFileContents = fs.readFileSync(inFile);
+					// mkdirp(path.dirname(outFile), function(writeErr) {
+					// 	if (writeErr) {
+					// 		console.log(chalk.red(outFile, writeErr));
+					// 	} else {
+					// 		fs.writeFileSync(outFile, inFileContents);
+					// 	}
+					// 	resolve();
+					// });
+				}
 			});
 		})
 	);

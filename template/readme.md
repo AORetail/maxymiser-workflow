@@ -1,3 +1,4 @@
+<!-- maxymiser-workflow start -->
 # Maxymiser Workflow
 
 A mechanism to speed up maxymiser test development without having to copy-paste-save
@@ -64,3 +65,4 @@ npm run build
 ```
 
 This will build transform all of the script files to be copy-and-pasted into Maxymiser.
+<!-- maxymiser-workflow end -->

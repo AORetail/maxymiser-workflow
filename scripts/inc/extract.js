@@ -45,15 +45,16 @@ async function extractFromUrl(url) {
 
 function writeFile(outFile, contents) {
 	return new Promise(function(resolve, reject) {
+		let relFile = path.relative(appDirectory, outFile);
 		mkdirp(path.dirname(outFile), function(writeErr) {
 			if (writeErr) {
 				console.log(
-					chalk.red(path.relative(appDirectory, outFile), writeErr)
+					chalk.red(relFile, writeErr)
 				);
 			} else {
 				console.log(
 					chalk.green(
-						`Writing: ${path.relative(appDirectory, outFile)}`
+						`Writing: ${relFile}`
 					)
 				);
 				fs.writeFileSync(outFile, contents);
@@ -101,6 +102,34 @@ async function extract() {
 		configData.orderMap = {};
 	}
 
+	const allFiles = [];
+
+	answers = await inquirer.prompt([
+		{
+			name: 'extractScripts',
+			message: 'Global Scripts to extract',
+			type: 'checkbox',
+			choices: resp.Scripts.map(s => ({ name: s.Name }))
+		}
+
+	]);
+	let scriptsToExtract = answers.extractScripts;
+	configData.globalUnextracted = {};
+
+	// Global scripts
+	resp.Scripts.forEach(function(sc) {
+		const { Name: name, Data: data, Order: order } = sc;
+
+		configData.orderMap[name] = order;
+		if (scriptsToExtract.includes(name)){
+			const outFile = path.resolve(srcDir, `global/${name}.js`);
+			allFiles.push({ file: outFile, data: data });
+		} else {
+			configData.globalUnextracted[name] = data;
+		}
+	});
+
+	// Select Campaign if none specified
 	let campaignList = resp.Campaigns.map(x => x.Name);
 	if (campaignList.indexOf(campaign) === -1) {
 		answers = await inquirer.prompt([
@@ -115,17 +144,6 @@ async function extract() {
 	}
 	configData.campaign = campaign;
 
-	const allFilePromises = [];
-
-	// Global scripts
-	resp.Scripts.forEach(function(sc) {
-		const { Name: name, Data: data, Order: order } = sc;
-
-		configData.orderMap[name] = order;
-		const outFile = path.resolve(srcDir, `global/${name}.js`);
-		allFilePromises.push(writeFile(outFile, data));
-	});
-
 	// Get variants of requested campaign
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
@@ -135,7 +153,7 @@ async function extract() {
 			// console.dir(data);
 			configData.orderMap[name] = order;
 			const outFile = path.resolve(srcDir, `campaignScripts/${name}.js`);
-			allFilePromises.push(writeFile(outFile, data));
+			allFiles.push({ file: outFile, data: data });
 		});
 		camp.Elements.forEach(function(element) {
 			let variant = element.VariantName;
@@ -148,19 +166,36 @@ async function extract() {
 						srcDir,
 						`variants/${variant}.${ext}`
 					);
-					allFilePromises.push(writeFile(outFile, d.Data));
+					allFiles.push({ file: outFile, data: d.Data });
 				}
 			});
 		});
 	}
 
+	// prompt for overwrites
+
+	let filesThatExist = allFiles.filter(({ file }) => fs.existsSync(file));
+
+	answers = await inquirer.prompt(filesThatExist.map(({ file }) => {
+		let relFile = path.relative(appDirectory, file);
+		return {
+			name: relFile,
+			message: `Overwrite ${relFile}?`,
+			type: 'confirm',
+			default: true
+		};
+	}));
+
+	const filesToWrite = allFiles.filter(async ({ file }) => answers.hasOwnProperty(file)  ? answers[file] : true);
+
 	configData.SiteInfo = resp.SiteInfo;
-	allFilePromises.push(
-		writeFile(configFile, JSON.stringify(configData, null, 2))
-	);
+
+	filesToWrite.push({ file: configFile, data: JSON.stringify(configData, null, 2) });
+
+	const allFilesPromises = filesToWrite.map(({ file, data }) => writeFile(file, data));
 
 	return new Promise(function(resolve, reject) {
-		Promise.all(allFilePromises).then(() => {
+		Promise.all(allFilesPromises).then(() => {
 			resolve(variants);
 		});
 	});
