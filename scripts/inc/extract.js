@@ -4,12 +4,25 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const babel = require('babel-core');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const packageJson = require(path.resolve(appDirectory, 'package.json'));
 
 const srcDir = path.resolve(appDirectory, 'src');
 const configDir = path.resolve(appDirectory, 'config');
+
+function parseMaxymiserBody(response) {
+	// eslint-disable-next-line no-unused-vars
+	let mmRequestCallbacks = {
+		0: function(x) {
+			return x;
+		}
+	};
+	// eslint-disable-next-line no-eval
+	let body = eval(response);
+	return body;
+}
 
 /**
  * Gets the script fromm the url and strips off unneeded jquery callback.
@@ -30,10 +43,8 @@ async function extractFromUrl(url) {
 			});
 
 			res.on('end', function() {
-				const st = 'mmRequestCallbacks[0]('.length;
-				const ed = body.length - ');'.length;
-				body = body.substring(st, ed);
-				resolve(JSON.parse(body));
+				body = parseMaxymiserBody(body);
+				resolve(body);
 			});
 		});
 
@@ -48,20 +59,22 @@ function writeFile(outFile, contents) {
 		let relFile = path.relative(appDirectory, outFile);
 		mkdirp(path.dirname(outFile), function(writeErr) {
 			if (writeErr) {
-				console.log(
-					chalk.red(relFile, writeErr)
-				);
+				console.log(chalk.red(relFile, writeErr));
 			} else {
-				console.log(
-					chalk.green(
-						`Writing: ${relFile}`
-					)
-				);
+				console.log(chalk.green(`Writing: ${relFile}`));
 				fs.writeFileSync(outFile, contents);
 			}
 			resolve();
 		});
 	});
+}
+
+function shouldWriteFile({name, file, data }) {
+	if (fs.existsSync(file) && data === fs.readFileSync(file).toString()){
+		console.log(chalk.green(`File unchanged: ${name}`));
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -72,8 +85,9 @@ async function extract() {
 	const configData = require(configFile);
 
 	let campaign = configData.campaign || packageJson.name;
+	let answers = {};
 
-	let answers = await inquirer.prompt([
+	answers = await inquirer.prompt([
 		{
 			name: 'url',
 			type: 'input',
@@ -102,7 +116,7 @@ async function extract() {
 		configData.orderMap = {};
 	}
 
-	const allFiles = [];
+	let allFiles = [];
 
 	answers = await inquirer.prompt([
 		{
@@ -111,7 +125,6 @@ async function extract() {
 			type: 'checkbox',
 			choices: resp.Scripts.map(s => ({ name: s.Name }))
 		}
-
 	]);
 	let scriptsToExtract = answers.extractScripts;
 	configData.globalUnextracted = {};
@@ -121,7 +134,7 @@ async function extract() {
 		const { Name: name, Data: data, Order: order } = sc;
 
 		configData.orderMap[name] = order;
-		if (scriptsToExtract.includes(name)){
+		if (scriptsToExtract.includes(name)) {
 			const outFile = path.resolve(srcDir, `global/${name}.js`);
 			allFiles.push({ file: outFile, data: data });
 		} else {
@@ -131,68 +144,94 @@ async function extract() {
 
 	// Select Campaign if none specified
 	let campaignList = resp.Campaigns.map(x => x.Name);
-	if (campaignList.indexOf(campaign) === -1) {
-		answers = await inquirer.prompt([
-			{
-				name: 'campaign',
-				type: 'list',
-				message: 'Campaign to extract',
-				choices: campaignList
-			}
-		]);
-		campaign = answers.campaign;
-	}
+	answers = await inquirer.prompt([
+		{
+			name: 'campaign',
+			type: 'list',
+			message: 'Campaign to extract',
+			choices: campaignList,
+			default: campaign || campaignList[0]
+		}
+	]);
+	campaign = answers.campaign;
 	configData.campaign = campaign;
 
 	// Get variants of requested campaign
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
 	if (camp) {
-		camp.Scripts.forEach(function(sc) {
-			const { Name: name, Data: data, Order: order } = sc;
-			// console.dir(data);
-			configData.orderMap[name] = order;
-			const outFile = path.resolve(srcDir, `campaignScripts/${name}.js`);
-			allFiles.push({ file: outFile, data: data });
-		});
-		camp.Elements.forEach(function(element) {
-			let variant = element.VariantName;
-			variants.push(variant);
-			element.Data.forEach(function(d) {
-				let type = d.Type.toLowerCase();
-				if (type === 'script' || type === 'css') {
-					let ext = type === 'css' ? 'scss' : 'js';
-					const outFile = path.resolve(
-						srcDir,
-						`variants/${variant}.${ext}`
-					);
-					allFiles.push({ file: outFile, data: d.Data });
+		if (camp.Scripts) {
+			camp.Scripts.forEach(function(sc) {
+				const { Name: name, Data: data, Order: order } = sc;
+				configData.orderMap[name] = order;
+				const relFile = `campaignScripts/${name}.js`;
+				const outFile = path.resolve(srcDir, relFile);
+				allFiles.push({ name: relFile, file: outFile, data: data });
+			});
+		}
+
+		if (camp.Elements) {
+			camp.Elements.forEach(function(element) {
+				if (element.Data) {
+					let variant = element.VariantName;
+					variants.push(variant);
+					element.Data.forEach(function(d) {
+						let type = d.Type.toLowerCase();
+						if (type === 'script' || type === 'css') {
+							let ext = type === 'css' ? 'scss' : 'js';
+							let relFile = `variants/${variant}.${ext}`;
+							const outFile = path.resolve(srcDir, relFile);
+							allFiles.push({
+								name: relFile,
+								file: outFile,
+								data: d.Data
+							});
+						}
+					});
 				}
 			});
-		});
+		}
 	}
 
 	// prompt for overwrites
 
+	// remove unchanged files
+	allFiles = allFiles.filter(shouldWriteFile);
+
 	let filesThatExist = allFiles.filter(({ file }) => fs.existsSync(file));
+	let deDot = function(str) {
+		return str.replace(/\./gm, '');
+	};
 
-	answers = await inquirer.prompt(filesThatExist.map(({ file }) => {
-		let relFile = path.relative(appDirectory, file);
-		return {
-			name: relFile,
-			message: `Overwrite ${relFile}?`,
-			type: 'confirm',
-			default: true
-		};
-	}));
+	answers = await inquirer.prompt(
+		filesThatExist.map(({ name }) => {
+			return {
+				name: `${deDot(name)}`,
+				message: `Overwrite ${name}?`,
+				type: 'confirm',
+				default: true
+			};
+		})
+	);
 
-	const filesToWrite = allFiles.filter(async ({ file }) => answers.hasOwnProperty(file)  ? answers[file] : true);
+	let filesToWrite = allFiles.filter(({ name }) => {
+		let answerKey = deDot(name);
+		return answers.hasOwnProperty(answerKey) ? answers[answerKey] : true;
+	});
 
 	configData.SiteInfo = resp.SiteInfo;
 
-	filesToWrite.push({ file: configFile, data: JSON.stringify(configData, null, 2) });
+	filesToWrite.push({
+		name: path.relative(appDirectory, configFile),
+		file: configFile,
+		data: JSON.stringify(configData, null, 2)
+	});
 
-	const allFilesPromises = filesToWrite.map(({ file, data }) => writeFile(file, data));
+	filesToWrite = filesToWrite.filter(shouldWriteFile);
+
+	const allFilesPromises = filesToWrite.map(({ file, data }) =>
+		writeFile(file, data)
+	);
 
 	return new Promise(function(resolve, reject) {
 		Promise.all(allFilesPromises).then(() => {
@@ -202,3 +241,4 @@ async function extract() {
 }
 
 module.exports = extract;
+module.exports.parseMaxymiserBody = parseMaxymiserBody;
