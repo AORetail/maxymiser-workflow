@@ -1,6 +1,6 @@
 {
   "name": "maxymiser-workflow",
-  "version": "1.0.0",
+  "version": "1.1.0-rc1",
   "description": "Scripts to improve workfow with Maxymiser",
   "repository": "AORetail/maxymiser-workflow",
   "engines": {
@@ -20,30 +20,31 @@
     "postinstall": "node ./scripts/postinstall.js",
     "lint": "eslint ."
   },
-  "author": "Alastair.Brown@ao.com",
+  "contributors": [
+    "Alastair Brown <Alastair.Brown@ao.com>"
+  ],
   "license": "MIT",
   "dependencies": {
     "autoprefixer": "^7.2.4",
-    "babel": "^6.23.0",
-    "babel-cli": "^6.26.0",
-    "babel-plugin-preval": "^1.6.2",
+    "babel-core": "^6.26.0",
+    "babel-plugin-preval": "^1.6.3",
     "babel-preset-env": "^1.6.1",
     "chalk": "^2.3.0",
     "cross-spawn": "^5.1.0",
     "deepmerge": "^2.0.1",
     "glob": "^7.1.2",
-    "inquirer": "^4.0.1",
+    "inquirer": "^5.0.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "node-sass": "^4.7.2",
-    "postcss": "^6.0.15"
+    "postcss": "^6.0.16"
   },
   "devDependencies": {
-    "eslint": "^4.14.0",
+    "eslint": "^4.15.0",
     "eslint-config-ao": "0.0.1-rc.3"
   },
   "peerDependencies": {
-    "eslint": "^4.14.0"
+    "eslint": "^4.15.0"
   },
   "browserlist": [
     "last 2 versions",

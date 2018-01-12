@@ -16,7 +16,6 @@ try {
 	}
 
 	updatePakageScripts(cwd);
+	// eslint-disable-next-line no-empty
 } catch (error) {
-	cwd = false;
-	console.log(error);
 }
