@@ -18,110 +18,7 @@ const packageJson = require(path.resolve(appDirectory, 'package.json'));
 const srcDir = path.resolve(appDirectory, 'src');
 const configDir = path.resolve(appDirectory, 'config');
 
-async function getVariants() {
-	return new Promise(function(resolve, reject) {
-		glob(
-			'./variants/*.@(js|scss)',
-			{
-				cwd: srcDir
-			},
-			function(er, files) {
-				if (files.length > 0) {
-					const variants = files.reduce(function(acc, file) {
-						var filePath = path.resolve(srcDir, file);
-						var ext = path.extname(filePath).substring(1);
-						var baseName = path.basename(
-							filePath,
-							path.extname(filePath)
-						);
-						if (!acc.hasOwnProperty(baseName)) {
-							acc[baseName] = [];
-						}
-						acc[baseName].push({
-							ext,
-							filePath: path
-								.relative(appDirectory, filePath)
-								.replace(/\\/gim, '/')
-						});
-						return acc;
-					}, {});
-					resolve(variants);
-				} else {
-					// console.log(chalk.red(`Variant ${variant} dosn't exist: Can't find "${variant}.js" or "${variant}.scss"`));
-					resolve([]);
-				}
-			}
-		);
-	});
-}
-
-async function getGlobalScripts() {
-	return new Promise(function(resolve, reject) {
-		glob(
-			'./global/*.@(js)',
-			{
-				cwd: srcDir
-			},
-			function(er, files) {
-				if (files.length > 0) {
-					const campaignFiles = files.map(function(file) {
-						let filePath = path.resolve(srcDir, file);
-						let ext = path.extname(filePath).substring(1);
-						let name = path.basename(
-							filePath,
-							path.extname(filePath)
-						);
-						return {
-							ext,
-							filePath: path
-								.relative(appDirectory, filePath)
-								.replace(/\\/gim, '/'),
-							name
-						};
-					});
-					resolve(campaignFiles);
-				} else {
-					// console.log(chalk.red(`Variant ${variant} dosn't exist: Can't find "${variant}.js" or "${variant}.scss"`));
-					resolve([]);
-				}
-			}
-		);
-	});
-}
-
-async function getCampaignScripts() {
-	return new Promise(function(resolve, reject) {
-		glob(
-			'./campaignScripts/*.@(js)',
-			{
-				cwd: srcDir
-			},
-			function(er, files) {
-				if (files.length > 0) {
-					const campaignFiles = files.map(function(file) {
-						var filePath = path.resolve(srcDir, file);
-						var ext = path.extname(filePath).substring(1);
-						var name = path.basename(
-							filePath,
-							path.extname(filePath)
-						);
-						return {
-							ext,
-							filePath: path
-								.relative(appDirectory, filePath)
-								.replace(/\\/gim, '/'),
-							name
-						};
-					});
-					resolve(campaignFiles);
-				} else {
-					// console.log(chalk.red(`Variant ${variant} dosn't exist: Can't find "${variant}.js" or "${variant}.scss"`));
-					resolve([]);
-				}
-			}
-		);
-	});
-}
+const { getGlobalScripts, getCampaignScripts, getVariants } = require('./inc/generate');
 
 /**
  * Collates relevant files to be injected into `template_cg_v5.js` to generate `replace_cg_v5.js`
@@ -135,9 +32,9 @@ async function generateVariant(variant, variantFiles) {
 
 	let campaign = config.campaign || packageJson.name;
 
-	let globalFiles = await getGlobalScripts();
+	let globalFiles = await getGlobalScripts(appDirectory, srcDir);
 
-	let campaignFiles = await getCampaignScripts();
+	let campaignFiles = await getCampaignScripts(appDirectory, srcDir);
 
 	var options = {
 		globalFiles,
@@ -155,7 +52,7 @@ async function generateVariant(variant, variantFiles) {
 }
 
 async function generateFromArgs(variant) {
-	const variants = await getVariants();
+	const variants = await getVariants(appDirectory, srcDir);
 
 	if (variants.length === 0) {
 		console.log(chalk.red('No variants exist'));
