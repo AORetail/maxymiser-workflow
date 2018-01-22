@@ -1,7 +1,7 @@
 {
   "name": "maxymiser-workflow",
-  "version": "1.1.0-rc2",
-  "description": "Scripts to improve workfow with Maxymiser",
+  "version": "1.1.0-rc3",
+  "description": "Scripts to improve workflow with Maxymiser",
   "repository": "AORetail/maxymiser-workflow",
   "engines": {
     "node": ">=6"
