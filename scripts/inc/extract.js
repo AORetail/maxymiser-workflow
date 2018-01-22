@@ -4,7 +4,6 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
-const babel = require('babel-core');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const packageJson = require(path.resolve(appDirectory, 'package.json'));
@@ -232,6 +231,7 @@ async function extract() {
 	const allFilesPromises = filesToWrite.map(({ file, data }) =>
 		writeFile(file, data)
 	);
+
 
 	return new Promise(function(resolve, reject) {
 		Promise.all(allFilesPromises).then(() => {

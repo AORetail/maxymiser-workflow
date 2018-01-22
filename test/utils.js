@@ -25,7 +25,7 @@ function directoryControl(tempDir, dirPath){
 		destroy(){
 			return new Promise(function(resolve, reject){
 				rimraf(controlledDir, function(){
-					if (fs.readdirSync().length > 0){
+					if (fs.readdirSync(tempDir).length > 0){
 						resolve();
 					} else {
 						rimraf(tempDir, resolve);
@@ -36,6 +36,11 @@ function directoryControl(tempDir, dirPath){
 	};
 }
 
+function getPackageJson(dir){
+	return JSON.parse(fs.readFileSync(path.resolve(dir, 'package.json')).toString());
+}
+
 module.exports = {
-	directoryControl
+	directoryControl,
+	getPackageJson
 };

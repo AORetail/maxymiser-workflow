@@ -1,12 +1,9 @@
 const expect = require('chai').expect;
 const fs = require('fs');
 const path = require('path');
-const stdin = require('mock-stdin').stdin();
-const rimraf = require('rimraf');
 const mkdirp = require('mkdirp');
-const util = require('util');
 const spawn = require('cross-spawn');
-const nock = require('nock');
+const utils = require('./utils');
 
 require('timers');
 
@@ -14,7 +11,7 @@ const appDirectory = fs.realpathSync(process.cwd());
 const tempDir = path.resolve(appDirectory, 'temp');
 
 describe('postinstall', function() {
-	let dirControl = require('./utils').directoryControl(
+	let dirControl = utils.directoryControl(
 		tempDir,
 		'postinstall'
 	);
@@ -52,7 +49,7 @@ describe('postinstall', function() {
 				{ cwd: subDir }
 			);
 			child.stdout.on('end', function(){
-				let pkg = require(path.resolve(dirControl.dir, 'package.json'));
+				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
 				done();
@@ -89,7 +86,7 @@ describe('postinstall', function() {
 				{ cwd: subDir }
 			);
 			child.stdout.on('end', function(){
-				let pkg = require(path.resolve(dirControl.dir, 'package.json'));
+				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
 				done();
@@ -134,7 +131,7 @@ describe('postinstall', function() {
 				{ cwd: subDir }
 			);
 			child.stdout.on('end', function(){
-				let pkg = require(path.resolve(dirControl.dir, 'package.json'));
+				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
 				done();
@@ -160,7 +157,6 @@ describe('postinstall', function() {
 
 	after(function(done) {
 		process.chdir(appDirectory);
-		// dirControl.destroy().then(done);
-		done();
+		dirControl.destroy().then(done);
 	});
 });
