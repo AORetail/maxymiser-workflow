@@ -81,7 +81,7 @@ async function generateFromArgs(variant) {
 }
 
 async function promptUser() {
-	const variants = await getVariants();
+	const variants = await getVariants(appDirectory, srcDir);
 	const foundVariants = Object.keys(variants).sort();
 	const variantChoices = [...foundVariants, '* Create new'];
 
