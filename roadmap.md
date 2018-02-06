@@ -2,6 +2,10 @@
 
 * Generate from page. (get and parse `http://service.maxymiser.net/cg/v5/`).
 * Scaffold from git-repo
+* Use Maxymiser Rest API.
+  * Get Scripts
+  * Save/Update Scripts.
+* Minify Scripts (Uglify/closure compiler)
 
 ## Done
 
