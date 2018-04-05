@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+
 const updatePakageScripts = require('./inc/update-package-scripts');
 
 const startCwd = fs.realpathSync(process.cwd());

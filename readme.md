@@ -62,5 +62,9 @@ to
 ```shell-script
 npm run build
 ```
+| Option | Definition |
+| ------ | ---------- |
+| `-h`, `--help` | Print usage Information. |
+|       `--minify` | Minify scripts (defaults to true). |
 
 This will build transform all of the script files to be copy-and-pasted into Maxymiser.

@@ -5,11 +5,11 @@
 * Use Maxymiser Rest API.
   * Get Scripts
   * Save/Update Scripts.
-* Minify Scripts (Uglify/closure compiler)
 
 ## Done
 
 * Extract from `http://service.maxymiser.net/cg/v5/`.
+* Minify Scripts (Uglify/closure compiler)
 
 ## Rejected
 

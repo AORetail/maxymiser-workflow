@@ -1,11 +1,11 @@
 const fs = require('fs');
-const path = require('path');
 const minimist = require('minimist');
-const updatePakageScripts = require('./inc/update-package-scripts');
-const copyTemplateFiles = require('./inc/copy-template-files');
+const path = require('path');
 const spawn = require('cross-spawn');
 
+const copyTemplateFiles = require('./inc/copy-template-files');
 const extract = require('./inc/extract');
+const updatePakageScripts = require('./inc/update-package-scripts');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const appPkg = require(path.resolve(appDirectory, 'package.json'));

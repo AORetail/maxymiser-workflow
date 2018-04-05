@@ -4,6 +4,7 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const { URL } = require('url');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const packageJson = require(path.resolve(appDirectory, 'package.json'));
@@ -28,9 +29,17 @@ function parseMaxymiserBody(response) {
  *
  * @param {string} url
  */
-async function extractFromUrl(url) {
+async function extractFromUrl(url, userAgent) {
 	return new Promise(function(resolve, reject) {
-		var request = http.get(url, function(res) {
+		url = new URL(url);
+		let options = {
+			host: url.host,
+			path: url.pathname + url.search,
+			headers: {
+				'User-Agent': userAgent
+			}
+		};
+		var request = http.get(options, function(res) {
 			var body = '';
 
 			if (res.statusCode !== 200) {
@@ -68,8 +77,8 @@ function writeFile(outFile, contents) {
 	});
 }
 
-function shouldWriteFile({name, file, data }) {
-	if (fs.existsSync(file) && data === fs.readFileSync(file).toString()){
+function shouldWriteFile({ name, file, data }) {
+	if (fs.existsSync(file) && data === fs.readFileSync(file).toString()) {
 		console.log(chalk.green(`File unchanged: ${name}`));
 		return false;
 	}
@@ -106,10 +115,40 @@ async function extract() {
 		}
 	]);
 
+	answers = await inquirer.prompt([
+		{
+			name: 'userAgent',
+			message: 'Device to emulate',
+			type: 'list',
+			choices: [
+				{
+					name: 'Desktop (Chrome)',
+					value:
+						'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+				},
+				{
+					name: 'Tablet (iPad)',
+					value:
+						'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1'
+				},
+				{
+					name: 'Mobile (iPhone)',
+					value:
+						'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
+				}
+			],
+			default:
+				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+		}
+	]);
+
 	let url = answers.url || configData.extractUrl;
 	configData.extractUrl = url;
+	let userAgent =
+		answers.userAgent ||
+		'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1';
 
-	const resp = await extractFromUrl(url);
+	const resp = await extractFromUrl(url, userAgent);
 
 	if (!configData.hasOwnProperty('ordermap')) {
 		configData.orderMap = {};
@@ -119,13 +158,13 @@ async function extract() {
 
 	answers = await inquirer.prompt([
 		{
-			name: 'extractScripts',
+			name: 'extractGlobalScripts',
 			message: 'Global Scripts to extract',
 			type: 'checkbox',
 			choices: resp.Scripts.map(s => ({ name: s.Name }))
 		}
 	]);
-	let scriptsToExtract = answers.extractScripts;
+	let globalScriptsToExtract = answers.extractGlobalScripts;
 	configData.globalUnextracted = {};
 
 	// Global scripts
@@ -133,7 +172,7 @@ async function extract() {
 		const { Name: name, Data: data, Order: order } = sc;
 
 		configData.orderMap[name] = order;
-		if (scriptsToExtract.includes(name)) {
+		if (globalScriptsToExtract.includes(name)) {
 			const outFile = path.resolve(srcDir, `global/${name}.js`);
 			allFiles.push({ file: outFile, data: data });
 		} else {
@@ -159,13 +198,28 @@ async function extract() {
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
 	if (camp) {
+		configData.campaignUnextracted = {};
 		if (camp.Scripts) {
+			answers = await inquirer.prompt([
+				{
+					name: 'extractCampaignScripts',
+					message: 'Campaign Scripts to extract',
+					type: 'checkbox',
+					choices: camp.Scripts.map(s => ({ name: s.Name }))
+				}
+			]);
+			let campaignScriptsToExtract = answers.extractCampaignScripts;
+
 			camp.Scripts.forEach(function(sc) {
 				const { Name: name, Data: data, Order: order } = sc;
 				configData.orderMap[name] = order;
-				const relFile = `campaignScripts/${name}.js`;
-				const outFile = path.resolve(srcDir, relFile);
-				allFiles.push({ name: relFile, file: outFile, data: data });
+				if (campaignScriptsToExtract.includes(name)) {
+					const relFile = `campaignScripts/${name}.js`;
+					const outFile = path.resolve(srcDir, relFile);
+					allFiles.push({ name: relFile, file: outFile, data: data });
+				} else {
+					configData.campaignUnextracted[name] = data;
+				}
 			});
 		}
 
@@ -231,7 +285,6 @@ async function extract() {
 	const allFilesPromises = filesToWrite.map(({ file, data }) =>
 		writeFile(file, data)
 	);
-
 
 	return new Promise(function(resolve, reject) {
 		Promise.all(allFilesPromises).then(() => {

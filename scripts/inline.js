@@ -1,11 +1,16 @@
-const babel = require('babel-core');
-const sass = require('node-sass');
-const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
+const babel = require('babel-core');
+const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
+const postcss = require('postcss');
+const sass = require('node-sass');
+const uglifyJS = require('uglify-js');
+
 
 const appDirectory = fs.realpathSync(process.cwd());
+const srcDir = path.resolve(appDirectory, 'src');
+
 const scssSettings = require(appDirectory + '/config/scss-settings');
 
 const babelOptions = require('../config/babel.config');
@@ -14,9 +19,20 @@ const babelOptions = require('../config/babel.config');
  * Use Babel to transform the JS file.
  * @param {string} file File path relative to app.
  */
-function js(file) {
+function js(file, minify = false) {
 	file = path.resolve(appDirectory, file);
-	return babel.transformFileSync(file, babelOptions).code;
+	let filePath = path.relative(srcDir, file);
+	let code = babel.transformFileSync(file, babelOptions).code;
+	if (minify){
+		let uglyResults = uglifyJS.minify(code);
+
+		if (uglyResults.error){
+			console.log(chalk.red(filePath, uglyResults.error));
+		} else {
+			code = uglyResults.code;
+		}
+	}
+	return code;
 }
 
 /**

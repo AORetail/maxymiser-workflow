@@ -1,12 +1,11 @@
 const babel = require('babel-core');
-const fs = require('fs');
-const path = require('path');
-const mkdirp = require('mkdirp');
 const chalk = require('chalk');
+const fs = require('fs');
+const mkdirp = require('mkdirp');
+const path = require('path');
+
 const rootPath = path.resolve('.');
-
 const appDirectory = fs.realpathSync(process.cwd());
-
 const watchDir = path.resolve(appDirectory, 'src');
 const srcFile = path.resolve(appDirectory, './config/replace_cg_v5.js');
 const outFile = path.resolve(appDirectory, `./dist/${path.basename(srcFile)}`);

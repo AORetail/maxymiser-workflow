@@ -5,11 +5,12 @@
 
 const chalk = require('chalk');
 const fs = require('fs');
-const glob = require('glob');
-const path = require('path');
-const template = require('./inc/template_cg_v5');
-const minimist = require('minimist');
 const inquirer = require('inquirer');
+const minimist = require('minimist');
+const mkdirp = require('mkdirp');
+const path = require('path');
+
+const template = require('./inc/template_cg_v5');
 
 const appDirectory = fs.realpathSync(process.cwd());
 
@@ -25,7 +26,7 @@ const { getGlobalScripts, getCampaignScripts, getVariants } = require('./inc/gen
  * @param {string} variant Variant Name
  * @param {Array <string>} variantFiles Array of variant files.
  */
-async function generateVariant(variant, variantFiles) {
+async function generateVariant(variant, variantFiles, minify = false) {
 	console.log(chalk.blue(`Generating ${variant}`));
 
 	const config = require(path.resolve(configDir, 'maxymiser-workflow.json'));
@@ -42,7 +43,8 @@ async function generateVariant(variant, variantFiles) {
 		campaignFiles: campaignFiles,
 		variant,
 		variantFiles,
-		config
+		config,
+		minify
 	};
 
 	return fs.writeFileSync(
@@ -51,7 +53,7 @@ async function generateVariant(variant, variantFiles) {
 	);
 }
 
-async function generateFromArgs(variant) {
+async function generateFromArgs(variant, minify) {
 	const variants = await getVariants(appDirectory, srcDir);
 
 	if (variants.length === 0) {
@@ -71,7 +73,7 @@ async function generateFromArgs(variant) {
 				)
 			);
 		} else {
-			generateVariant(variant, variants[variant]);
+			generateVariant(variant, variants[variant], minify);
 		}
 	} else if (foundVariants.length > 0) {
 		generateVariant(defaultVariant, variants[defaultVariant]);
@@ -80,7 +82,7 @@ async function generateFromArgs(variant) {
 	}
 }
 
-async function promptUser() {
+async function promptUser(minify) {
 	const variants = await getVariants(appDirectory, srcDir);
 	const foundVariants = Object.keys(variants).sort();
 	const variantChoices = [...foundVariants, '* Create new'];
@@ -135,11 +137,13 @@ async function promptUser() {
 
 		let includeCss = answers.includeCss;
 
+		mkdirp.sync(path.resolve(srcDir, 'variants'));
+
 		if (includeCss) {
 			let cssFilePath = path.resolve(srcDir, `variants/${variant}.scss`);
 			fs.writeFileSync(cssFilePath, '');
 			variants[variant].push({
-				ext: 'css',
+				ext: 'scss',
 				filePath: path
 					.relative(appDirectory, cssFilePath)
 					.replace(/\\/gim, '/')
@@ -157,7 +161,7 @@ async function promptUser() {
 		});
 	}
 
-	generateVariant(variant, variants[variant]);
+	generateVariant(variant, variants[variant], minify);
 }
 
 const helpText = `
@@ -165,13 +169,14 @@ Useage:
   $0 [options]
 Options:
   -h, --help      Print usage Information.
-  -v, --variant  Variant to want to generate for.
-  -a, --auto          Uses first vaiant it finds.
+  -v, --variant   Variant to want to generate for.
+  -a, --auto      Uses first vaiant it finds.
+      --minify    Minify scripts.
 `;
 
 const args = process.argv.slice(2);
 const argv = minimist(args, {
-	boolean: ['auto'],
+	boolean: ['auto', 'minify'],
 	string: ['variant'],
 	alias: {
 		h: 'help',
@@ -180,14 +185,15 @@ const argv = minimist(args, {
 	},
 	default: {
 		help: false,
-		auto: false
+		auto: false,
+		minify: false
 	}
 });
 
 if (argv.help) {
 	console.log(helpText);
 } else if (argv.auto || argv.variant) {
-	generateFromArgs(argv.variant);
+	generateFromArgs(argv.variant, argv.minify);
 } else {
-	promptUser();
+	promptUser(argv.minify);
 }

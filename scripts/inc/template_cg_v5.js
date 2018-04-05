@@ -1,17 +1,20 @@
 /* eslint-disable max-len */
 
+const API_VERSION = '1.12';
+
 function template({
 	campaign,
 	campaignFiles,
 	variant,
 	variantFiles,
 	globalFiles = [],
-	config = {}
+	config = {},
+	minify = false
 }) {
 	let orderIndex = 0;
 	let orderMap = config.orderMap || {};
 
-	if (!config.hasOwnProperty('globalUnextracted')){
+	if (!config.hasOwnProperty('globalUnextracted')) {
 		config.globalUnextracted = {};
 	}
 
@@ -23,7 +26,9 @@ function template({
 	globalFiles = globalFiles
 		.filter(({ name }) => !config.globalUnextracted.hasOwnProperty(name))
 		.map(d => {
-			d.data = `preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${d.filePath}")\``;
+			d.data = `preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${
+				d.filePath
+			}", ${minify})\``;
 			return d;
 		});
 
@@ -36,25 +41,44 @@ function template({
 				Type: 'script',
 				Attrs: { type: 'text/javascript' },
 				Data:${data},
-				Order: ${ orderMap.hasOwnProperty(name) ? orderMap[name] : -50 * (globalFiles.length - index - 1)},
-				HighLevelApiVersion: '1.6'
+				Order: ${
+					orderMap.hasOwnProperty(name)
+						? orderMap[name]
+						: -50 * (globalFiles.length - index - 1)
+				},
+				HighLevelApiVersion: '${API_VERSION}'
 			}`;
 		});
 
+	let campaignUnextracted = Object.entries(config.campaignUnextracted).map(
+		a => ({
+			name: a[0],
+			data: JSON.stringify(a[1])
+		})
+	);
+
 	campaignFiles = campaignFiles
-		.map(function({ name, filePath, ext }) {
-			if (ext === 'js') {
-				return `
-					{
-						Name: '${name}',
-						Type: 'script',
-						Attrs: { type: 'text/javascript' },
-						Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
-						Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : orderIndex++},
-						HighLevelApiVersion: '1.6'
-					}`;
-			}
-			return '';
+		.filter(({ name }) => !config.campaignUnextracted.hasOwnProperty(name))
+		.map(d => {
+			d.data = `preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${
+				d.filePath
+			}", ${minify})\``;
+			return d;
+		});
+
+	campaignFiles = campaignUnextracted
+		.concat(campaignFiles)
+		.map(function({ name, data }) {
+			return `
+				{
+					Name: '${name}',
+					Type: 'script',
+					Attrs: { type: 'text/javascript' },
+					Data:${data},
+					Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : orderIndex++},
+
+					HighLevelApiVersion: '${API_VERSION}'
+				}`;
 		})
 		.join(',\n');
 
@@ -64,7 +88,7 @@ function template({
 				return `
 								{
 									Type: 'Script',
-									Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}")\`,
+									Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").js("${filePath}" ,${minify})\`,
 									Attrs: {}
 								}`;
 			} else if (ext === 'scss') {
@@ -91,7 +115,7 @@ function template({
 				Name: '${campaign}',
 				Type: 'ABnMVT',
 				CSName: '',
-				HighLevelApiVersion: '1.6',
+				HighLevelApiVersion: '${API_VERSION}',
 				PagePrefix: '',
 				Scripts: [${campaignFiles}
 				],
