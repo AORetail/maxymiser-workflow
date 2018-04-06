@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+/* eslint-disable max-len, indent */
 
 const API_VERSION = '1.12';
 

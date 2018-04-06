@@ -29,10 +29,10 @@ async function getVariants(appDirectory, srcDir) {
 						return acc;
 					}, {});
 					Object.keys(variants).forEach(k => {
-						variants[k].sort( (a, b) => {
-							if (a.ext === b.ext){
+						variants[k].sort((a, b) => {
+							if (a.ext === b.ext) {
 								return 0;
-							} else if (a.ext === 'scss'){
+							} else if (a.ext === 'scss') {
 								return -1;
 							}
 

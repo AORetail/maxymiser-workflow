@@ -12,6 +12,15 @@ const packageJson = require(path.resolve(appDirectory, 'package.json'));
 const srcDir = path.resolve(appDirectory, 'src');
 const configDir = path.resolve(appDirectory, 'config');
 
+/* eslint-disable max-len */
+const DESKTOP_CHROME_USERAGENT =
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
+const IPAD_SAFARI_USERAGENT =
+	'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1';
+const IPHONE_SAFARI_USERAGENT =
+	'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1';
+/* eslint-ennodeable max-len */
+
 function parseMaxymiserBody(response) {
 	// eslint-disable-next-line no-unused-vars
 	let mmRequestCallbacks = {
@@ -123,30 +132,24 @@ async function extract() {
 			choices: [
 				{
 					name: 'Desktop (Chrome)',
-					value:
-						'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+					value: DESKTOP_CHROME_USERAGENT
 				},
 				{
 					name: 'Tablet (iPad)',
-					value:
-						'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1'
+					value: IPAD_SAFARI_USERAGENT
 				},
 				{
 					name: 'Mobile (iPhone)',
-					value:
-						'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
+					value: IPHONE_SAFARI_USERAGENT
 				}
 			],
-			default:
-				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+			default: DESKTOP_CHROME_USERAGENT
 		}
 	]);
 
 	let url = answers.url || configData.extractUrl;
 	configData.extractUrl = url;
-	let userAgent =
-		answers.userAgent ||
-		'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1';
+	let userAgent = answers.userAgent || DESKTOP_CHROME_USERAGENT;
 
 	const resp = await extractFromUrl(url, userAgent);
 
@@ -156,29 +159,32 @@ async function extract() {
 
 	let allFiles = [];
 
-	answers = await inquirer.prompt([
-		{
-			name: 'extractGlobalScripts',
-			message: 'Global Scripts to extract',
-			type: 'checkbox',
-			choices: resp.Scripts.map(s => ({ name: s.Name }))
-		}
-	]);
-	let globalScriptsToExtract = answers.extractGlobalScripts;
 	configData.globalUnextracted = {};
 
-	// Global scripts
-	resp.Scripts.forEach(function(sc) {
-		const { Name: name, Data: data, Order: order } = sc;
+	if (resp.Scripts && resp.Scripts.length > 0) {
+		answers = await inquirer.prompt([
+			{
+				name: 'extractGlobalScripts',
+				message: 'Global Scripts to extract',
+				type: 'checkbox',
+				choices: resp.Scripts.map(s => ({ name: s.Name }))
+			}
+		]);
+		let globalScriptsToExtract = answers.extractGlobalScripts;
 
-		configData.orderMap[name] = order;
-		if (globalScriptsToExtract.includes(name)) {
-			const outFile = path.resolve(srcDir, `global/${name}.js`);
-			allFiles.push({ file: outFile, data: data });
-		} else {
-			configData.globalUnextracted[name] = data;
-		}
-	});
+		// Global scripts
+		resp.Scripts.forEach(function(sc) {
+			const { Name: name, Data: data, Order: order } = sc;
+
+			configData.orderMap[name] = order;
+			if (globalScriptsToExtract.includes(name)) {
+				const outFile = path.resolve(srcDir, `global/${name}.js`);
+				allFiles.push({ file: outFile, data: data });
+			} else {
+				configData.globalUnextracted[name] = data;
+			}
+		});
+	}
 
 	// Select Campaign if none specified
 	let campaignList = resp.Campaigns.map(x => x.Name);
@@ -199,7 +205,7 @@ async function extract() {
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
 	if (camp) {
 		configData.campaignUnextracted = {};
-		if (camp.Scripts) {
+		if (camp.Scripts && camp.Scripts.length > 0) {
 			answers = await inquirer.prompt([
 				{
 					name: 'extractCampaignScripts',
@@ -223,7 +229,7 @@ async function extract() {
 			});
 		}
 
-		if (camp.Elements) {
+		if (camp.Elements && camp.Elements.length > 0) {
 			camp.Elements.forEach(function(element) {
 				if (element.Data) {
 					let variant = element.VariantName;

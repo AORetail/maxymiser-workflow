@@ -16,7 +16,6 @@ switch (script) {
 	case 'watch':
 	case 'generate':
 	case 'extract': {
-		console.log(require.resolve('../scripts/' + script));
 		const result = spawn.sync(
 			'node',
 			nodeArgs

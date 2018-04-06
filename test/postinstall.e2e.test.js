@@ -11,14 +11,17 @@ const appDirectory = fs.realpathSync(process.cwd());
 const tempDir = path.resolve(appDirectory, 'temp');
 
 describe('postinstall', function() {
-	let dirControl = utils.directoryControl(
-		tempDir,
-		'postinstall'
-	);
+	let dirControl = utils.directoryControl(tempDir, 'postinstall');
 
 	let subDir;
 
-	let expectedScripts = ['init-workflow', 'generate', 'watch', 'extract', 'build'];
+	let expectedScripts = [
+		'init-workflow',
+		'generate',
+		'watch',
+		'extract',
+		'build'
+	];
 	let child;
 
 	before(function(done) {
@@ -38,7 +41,7 @@ describe('postinstall', function() {
 
 	describe('Adds scripts to package.json (firstrun)', function() {
 		let scripts;
-		before(function(done){
+		before(function(done) {
 			fs.writeFileSync(
 				path.resolve(dirControl.dir, 'package.json'),
 				'{}'
@@ -48,7 +51,7 @@ describe('postinstall', function() {
 				[path.resolve(appDirectory, 'scripts/postinstall')],
 				{ cwd: subDir }
 			);
-			child.stdout.on('end', function(){
+			child.stdout.on('end', function() {
 				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
@@ -56,18 +59,16 @@ describe('postinstall', function() {
 			});
 		});
 
-		expectedScripts.forEach(
-			function(s) {
-				it(`has ${s}`, function(){
-					expect(scripts.hasOwnProperty(s)).to.be.equal(true);
-				});
-			}
-		);
+		expectedScripts.forEach(function(s) {
+			it(`has ${s}`, function() {
+				expect(scripts.hasOwnProperty(s)).to.be.equal(true);
+			});
+		});
 	});
 
 	describe('Adds scripts to package.json (already defined and same)', function() {
 		let scripts;
-		before(function(done){
+		before(function(done) {
 			fs.writeFileSync(
 				path.resolve(dirControl.dir, 'package.json'),
 				`{
@@ -85,7 +86,7 @@ describe('postinstall', function() {
 				[path.resolve(appDirectory, 'scripts/postinstall')],
 				{ cwd: subDir }
 			);
-			child.stdout.on('end', function(){
+			child.stdout.on('end', function() {
 				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
@@ -93,26 +94,24 @@ describe('postinstall', function() {
 			});
 		});
 
-		expectedScripts.forEach(
-			function(s) {
-				it(`has ${s}`, function(){
-					expect(scripts.hasOwnProperty(s)).to.be.equal(true);
-				});
-			}
-		);
+		expectedScripts.forEach(function(s) {
+			it(`has ${s}`, function() {
+				expect(scripts.hasOwnProperty(s)).to.be.equal(true);
+			});
+		});
 
-		expectedScripts.map( s=> `maxymiser-workflow-${s}`).forEach(
-			function(s) {
-				it(`doesn't have ${s}`, function(){
+		expectedScripts
+			.map(s => `maxymiser-workflow-${s}`)
+			.forEach(function(s) {
+				it(`doesn't have ${s}`, function() {
 					expect(scripts.hasOwnProperty(s)).to.be.equal(false);
 				});
-			}
-		);
+			});
 	});
 
 	describe('Adds scripts to package.json (already defined and not same)', function() {
 		let scripts;
-		before(function(done){
+		before(function(done) {
 			fs.writeFileSync(
 				path.resolve(dirControl.dir, 'package.json'),
 				`{
@@ -130,7 +129,7 @@ describe('postinstall', function() {
 				[path.resolve(appDirectory, 'scripts/postinstall')],
 				{ cwd: subDir }
 			);
-			child.stdout.on('end', function(){
+			child.stdout.on('end', function() {
 				let pkg = utils.getPackageJson(dirControl.dir);
 				expect(pkg.hasOwnProperty('scripts')).to.be.equal(true);
 				scripts = pkg.scripts;
@@ -138,21 +137,19 @@ describe('postinstall', function() {
 			});
 		});
 
-		expectedScripts.forEach(
-			function(s) {
-				it(`has ${s}`, function(){
-					expect(scripts.hasOwnProperty(s)).to.be.equal(true);
-				});
-			}
-		);
+		expectedScripts.forEach(function(s) {
+			it(`has ${s}`, function() {
+				expect(scripts.hasOwnProperty(s)).to.be.equal(true);
+			});
+		});
 
-		expectedScripts.map( s=> `maxymiser-workflow-${s}`).forEach(
-			function(s) {
-				it(`has ${s}`, function(){
+		expectedScripts
+			.map(s => `maxymiser-workflow-${s}`)
+			.forEach(function(s) {
+				it(`has ${s}`, function() {
 					expect(scripts.hasOwnProperty(s)).to.be.equal(true);
 				});
-			}
-		);
+			});
 	});
 
 	after(function(done) {

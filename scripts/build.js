@@ -116,8 +116,6 @@ const argv = minimist(args, {
 	}
 });
 
-console.log(argv);
-
 if (argv.help) {
 	console.log(helpText);
 } else {
