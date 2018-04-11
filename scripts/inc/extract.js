@@ -124,6 +124,9 @@ async function extract() {
 		}
 	]);
 
+	let url = answers.url || configData.extractUrl;
+	configData.extractUrl = url;
+
 	answers = await inquirer.prompt([
 		{
 			name: 'userAgent',
@@ -147,8 +150,7 @@ async function extract() {
 		}
 	]);
 
-	let url = answers.url || configData.extractUrl;
-	configData.extractUrl = url;
+	
 	let userAgent = answers.userAgent || DESKTOP_CHROME_USERAGENT;
 
 	const resp = await extractFromUrl(url, userAgent);
