@@ -143,7 +143,9 @@ function template({
 		},
 		ServerAttributes: {},
 		Iteration: 'PFhWBOh_hVlzcx_qg-Ifq5OS0vw',
-		Packages: ['mmpackage-1.6.js']
+		Packages: ${JSON.stringify(
+			config.Packages || ['mmpackage-1.12.js']
+		)}
 	});`;
 }
 

@@ -150,7 +150,7 @@ async function extract() {
 		}
 	]);
 
-	
+
 	let userAgent = answers.userAgent || DESKTOP_CHROME_USERAGENT;
 
 	const resp = await extractFromUrl(url, userAgent);
@@ -281,6 +281,7 @@ async function extract() {
 	});
 
 	configData.SiteInfo = resp.SiteInfo;
+	configData.Packages = resp.Packages;
 
 	filesToWrite.push({
 		name: path.relative(appDirectory, configFile),
