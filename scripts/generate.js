@@ -19,7 +19,11 @@ const packageJson = require(path.resolve(appDirectory, 'package.json'));
 const srcDir = path.resolve(appDirectory, 'src');
 const configDir = path.resolve(appDirectory, 'config');
 
-const { getGlobalScripts, getCampaignScripts, getVariants } = require('./inc/generate');
+const {
+	getGlobalScripts,
+	getCampaignScripts,
+	getVariants
+} = require('./inc/generate');
 
 /**
  * Collates relevant files to be injected into `template_cg_v5.js` to generate `replace_cg_v5.js`
@@ -125,19 +129,27 @@ async function promptUser(minify) {
 				}
 			},
 			{
-				name: 'includeCss',
-				type: 'confirm',
-				message: 'Include CSS?',
-				default: true
+				name: 'includeElement',
+				type: 'checkbox',
+				message: 'Include CSS or HTML ?',
+				choices: ['CSS', 'HTML']
 			}
 		]);
 
 		variant = answers.variantName;
 		variants[variant] = [];
 
-		let includeCss = answers.includeCss;
+		let includeCss = answers.includeElement.includes('CSS');
+		let includeHtml = answers.includeElement.includes('HTML');
 
 		mkdirp.sync(path.resolve(srcDir, 'variants'));
+
+		let jsCode = '';
+
+		let pathSepRegExp = new RegExp(
+			path.sep === '\\' ? '\\\\' : path.sep,
+			'gmi'
+		);
 
 		if (includeCss) {
 			let cssFilePath = path.resolve(srcDir, `variants/${variant}.scss`);
@@ -146,12 +158,28 @@ async function promptUser(minify) {
 				ext: 'scss',
 				filePath: path
 					.relative(appDirectory, cssFilePath)
-					.replace(/\\/gim, '/')
+					.replace(pathSepRegExp, '/')
 			});
+
+			jsCode = 'dom.addCss(css);\n';
+		}
+
+		if (includeHtml) {
+			let htmlFilePath = path.resolve(srcDir, `variants/${variant}.html`);
+			fs.writeFileSync(htmlFilePath, '<div></div>');
+			variants[variant].push({
+				ext: 'html',
+				filePath: path
+					.relative(appDirectory, htmlFilePath)
+					.replace(pathSepRegExp, '/')
+			});
+
+			jsCode += "// dom.insertHtmlAbove('body', html);\n";
 		}
 
 		let jsFilePath = path.resolve(srcDir, `variants/${variant}.js`);
-		fs.writeFileSync(jsFilePath, includeCss ? 'dom.addCss(css);' : '');
+
+		fs.writeFileSync(jsFilePath, jsCode);
 
 		variants[variant].push({
 			ext: 'js',

@@ -1,98 +1,86 @@
-const autoprefixer = require('autoprefixer');
-const babel = require('babel-core');
 const chalk = require('chalk');
 const fs = require('fs');
-const glob = require('glob');
 const minimist = require('minimist');
 const mkdirp = require('mkdirp');
 const path = require('path');
-const postcss = require('postcss');
-const sass = require('node-sass');
-const uglifyJS = require('uglify-js');
+
+const {
+	getGlobalScripts,
+	getCampaignScripts,
+	getVariants
+} = require('./inc/generate');
+
+const { inline } = require('./inline');
 
 const appDirectory = fs.realpathSync(process.cwd());
 
-const babelOptions = require('../config/babel.config');
-
-function build(dir, minify) {
-	const scssSettings = require(dir + '/config/scss-settings');
+async function build(dir, minify) {
 	const srcDir = path.resolve(dir, 'src');
 	const distDir = path.resolve(dir, 'dist');
 
-	glob('**/*.js', { cwd: srcDir }, function(er, files) {
-		files.forEach(function(file) {
-			var filePath = path.resolve(srcDir, file);
-			// console.log(chalk.blue(filePath));
-			babel.transformFile(filePath, babelOptions, function(err, result) {
-				if (err) {
-					console.log(chalk.red(filePath, err));
-				} else {
-					var outFile = path.resolve(distDir, file);
-					mkdirp(path.dirname(outFile), function(writeErr) {
-						if (writeErr) {
-							console.log(chalk.red(filePath, writeErr));
-						} else {
-							console.log(
-								chalk.green(
-									`Writing: ${file} → ${path.basename(
-										outFile
-									)}`
-								)
-							);
-							let code = result.code;
-							if (minify) {
-								let uglyResults = uglifyJS.minify(code);
-								if (uglyResults.error) {
-									console.log(
-										chalk.red(filePath, uglyResults.error)
-									);
-									return;
-								}
-								code = uglyResults.code;
-							}
-							fs.writeFileSync(outFile, code);
-						}
-					});
-				}
-			});
-		});
-	});
-
-	glob('variants/**/[^_]*.scss', { cwd: srcDir }, function(er, files) {
-		var processor = postcss([autoprefixer]);
-
-		files.forEach(function(file) {
-			var filePath = path.resolve(srcDir, file);
-			var compiledCss = sass
-				.renderSync(
-					Object.assign(
-						{
-							file: filePath
-						},
-						scssSettings
-					)
-				)
-				.css.toString();
-
-			var processedCss = processor.process(compiledCss).css;
-
-			var outFile = path.resolve(
-				distDir,
-				file.replace(/\.scss$/i, '.css')
-			);
+	function buildIt(fileObject) {
+		let { ext, filePath } = fileObject;
+		let fullFilePath = path.resolve(appDirectory, filePath);
+		var file = path.relative(srcDir, filePath);
+		try {
+			let code = '';
+			inline(filePath, '', minify);
+			var outFile = path.resolve(distDir, file);
 			mkdirp(path.dirname(outFile), function(writeErr) {
 				if (writeErr) {
-					console.log(chalk.red(filePath, writeErr));
+					console.log(chalk.red(fullFilePath, writeErr));
 				} else {
 					console.log(
 						chalk.green(
 							`Writing: ${file} → ${path.basename(outFile)}`
 						)
 					);
-					fs.writeFileSync(outFile, processedCss);
+					fs.writeFileSync(outFile, code);
 				}
 			});
-		}, this);
+		} catch (err) {
+			console.log(chalk.red(fullFilePath, err));
+		}
+	}
+
+	let globalFiles = await getGlobalScripts(appDirectory, srcDir);
+	let campaignFiles = await getCampaignScripts(appDirectory, srcDir);
+	const variants = await getVariants(appDirectory, srcDir);
+
+	[...globalFiles, ...campaignFiles].forEach(buildIt);
+	Object.entries(variants).forEach(function([variant, files]) {
+		let snippet = files.reduce((text, fileObject) => {
+			let { ext, filePath } = fileObject;
+			let code = inline(filePath, ext, true);
+			switch (ext) {
+				case 'js':
+					text += `<script>${code}</script>\n`;
+					break;
+				case 'scss':
+					text += `<style>${code}</style>\n`;
+					break;
+				case 'html':
+					text += code + '\n';
+					break;
+				default:
+					break;
+			}
+			return text;
+		}, '');
+
+		var outFile = path.resolve(distDir, `variants/${variant}.html`);
+		mkdirp(path.dirname(outFile), function(writeErr) {
+			if (writeErr) {
+				console.log(chalk.red(outFile, writeErr));
+			} else {
+				console.log(
+					chalk.green(
+						`Writing: ${variant} → ${path.basename(outFile)}`
+					)
+				);
+				fs.writeFileSync(outFile, snippet);
+			}
+		});
 	});
 }
 

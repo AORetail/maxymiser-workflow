@@ -1,7 +1,5 @@
 /* eslint-disable max-len, indent */
 
-const API_VERSION = '1.12';
-
 function template({
 	campaign,
 	campaignFiles,
@@ -13,6 +11,8 @@ function template({
 }) {
 	let orderIndex = 0;
 	let orderMap = config.orderMap || {};
+	const apiVersion = config.apiVersion || '1.13';
+	const requestCallback = config.apiVersion || 'mmRequestCallbacks[0]';
 
 	if (!config.hasOwnProperty('globalUnextracted')) {
 		config.globalUnextracted = {};
@@ -46,7 +46,7 @@ function template({
 						? orderMap[name]
 						: -50 * (globalFiles.length - index - 1)
 				},
-				HighLevelApiVersion: '${API_VERSION}'
+				HighLevelApiVersion: '${apiVersion}'
 			}`;
 		});
 
@@ -77,7 +77,7 @@ function template({
 					Data:${data},
 					Order: ${orderMap.hasOwnProperty(name) ? orderMap[name] : orderIndex++},
 
-					HighLevelApiVersion: '${API_VERSION}'
+					HighLevelApiVersion: '${apiVersion}'
 				}`;
 		})
 		.join(',\n');
@@ -98,6 +98,13 @@ function template({
 									Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").scss("${filePath}")\`,
 									Attrs: {}
 								}`;
+			} else if (ext === 'html') {
+				return `
+								{
+									Type: 'Html',
+									Data: preval\`module.exports = require("maxymiser-workflow/scripts/inline").html("${filePath}")\`,
+									Attrs: {}
+								}`;
 			}
 
 			return '';
@@ -107,7 +114,7 @@ function template({
 		})
 		.join(',\n');
 
-	return `mmRequestCallbacks[0]({
+	return `${requestCallback}({
 		Scripts: [${globalFiles}
 		],
 		Campaigns: [
@@ -115,7 +122,7 @@ function template({
 				Name: '${campaign}',
 				Type: 'ABnMVT',
 				CSName: '',
-				HighLevelApiVersion: '${API_VERSION}',
+				HighLevelApiVersion: '${apiVersion}',
 				PagePrefix: '',
 				Scripts: [${campaignFiles}
 				],
@@ -143,9 +150,7 @@ function template({
 		},
 		ServerAttributes: {},
 		Iteration: 'PFhWBOh_hVlzcx_qg-Ifq5OS0vw',
-		Packages: ${JSON.stringify(
-			config.Packages || ['mmpackage-1.12.js']
-		)}
+		Packages: ${JSON.stringify(config.Packages || ['mmpackage-1.12.js'])}
 	});`;
 }
 

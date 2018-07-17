@@ -47,7 +47,11 @@ fs.watch(srcFile, {}, async (eventType, filename) => {
 			path.resolve(watchDir, filename)
 		);
 		console.log(chalk.cyan(`File changed: "${filePath}"`));
-		await generateFile();
+		try {
+			await generateFile();
+		} catch(error){
+			chalk.red(`Error: "${error}"`);
+		}
 		srcfileChanged = false;
 	}
 });

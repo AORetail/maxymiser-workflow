@@ -7,7 +7,6 @@ const postcss = require('postcss');
 const sass = require('node-sass');
 const uglifyJS = require('uglify-js');
 
-
 const appDirectory = fs.realpathSync(process.cwd());
 const srcDir = path.resolve(appDirectory, 'src');
 
@@ -23,10 +22,10 @@ function js(file, minify = false) {
 	file = path.resolve(appDirectory, file);
 	let filePath = path.relative(srcDir, file);
 	let code = babel.transformFileSync(file, babelOptions).code;
-	if (minify){
+	if (minify) {
 		let uglyResults = uglifyJS.minify(code);
 
-		if (uglyResults.error){
+		if (uglyResults.error) {
 			console.log(chalk.red(filePath, uglyResults.error));
 		} else {
 			code = uglyResults.code;
@@ -68,13 +67,14 @@ function passThru(file) {
 	if (fileStats.isDirectory()) {
 		throw new Error(`${file} is a directory`);
 	}
-	return fs.readFileSync(filePath);
+	return fs.readFileSync(filePath).toString();
 }
 
 const typeMap = {
 	js: js,
 	css: scss,
-	scss: scss
+	scss: scss,
+	html: passThru
 };
 
 /**
@@ -83,24 +83,24 @@ const typeMap = {
  * @param {string} file File path relavite to app
  * @param {string} type (optional) How to process ['js', 'scss', 'css']. If ommited it will try to detect from file-extension. If not a valid type it will just read and pass the file contents through.
  */
-function inline(file, type){
+function inline(file, type, minify = false) {
 	type = typeof type === 'string' ? type.toLowerCase() : '';
 
-	if (!type){
+	if (!type) {
 		type = path.extname(file).toLowerCase();
-		if (type.startsWith('.')){
+		if (type.startsWith('.')) {
 			type = type.substr(1);
 		}
 	}
 
 	const func = typeMap.hasOwnProperty(type) ? typeMap[type] : passThru;
 
-	return func(file);
+	return func(file, minify);
 }
-
 
 module.exports = {
 	js,
 	scss,
+	html: passThru,
 	inline
 };

@@ -23,10 +23,14 @@ const IPHONE_SAFARI_USERAGENT =
 
 function parseMaxymiserBody(response) {
 	// eslint-disable-next-line no-unused-vars
+	let passThru = function(x) {
+		return x;
+	};
 	let mmRequestCallbacks = {
-		0: function(x) {
-			return x;
-		}
+		0: passThru,
+		1: passThru,
+		2: passThru,
+		3: passThru
 	};
 	// eslint-disable-next-line no-eval
 	let body = eval(response);
@@ -39,8 +43,10 @@ function parseMaxymiserBody(response) {
  * @param {string} url
  */
 async function extractFromUrl(url, userAgent) {
-	return new Promise(function(resolve, reject) {
+	if (!(url instanceof URL)) {
 		url = new URL(url);
+	}
+	return new Promise(function(resolve, reject) {
 		let options = {
 			host: url.host,
 			path: url.pathname + url.search,
@@ -126,6 +132,8 @@ async function extract() {
 
 	let url = answers.url || configData.extractUrl;
 	configData.extractUrl = url;
+	url = new URL(url);
+	configData.requestCallback = url.searchParams.get('jsncl');
 
 	answers = await inquirer.prompt([
 		{
@@ -149,7 +157,6 @@ async function extract() {
 			default: DESKTOP_CHROME_USERAGENT
 		}
 	]);
-
 
 	let userAgent = answers.userAgent || DESKTOP_CHROME_USERAGENT;
 
@@ -206,6 +213,7 @@ async function extract() {
 	const variants = [];
 	const camp = resp.Campaigns.find(x => x.Name === campaign);
 	if (camp) {
+		configData.apiVersion = camp.HighLevelApiVersion;
 		configData.campaignUnextracted = {};
 		if (camp.Scripts && camp.Scripts.length > 0) {
 			answers = await inquirer.prompt([
@@ -238,16 +246,27 @@ async function extract() {
 					variants.push(variant);
 					element.Data.forEach(function(d) {
 						let type = d.Type.toLowerCase();
-						if (type === 'script' || type === 'css') {
-							let ext = type === 'css' ? 'scss' : 'js';
-							let relFile = `variants/${variant}.${ext}`;
-							const outFile = path.resolve(srcDir, relFile);
-							allFiles.push({
-								name: relFile,
-								file: outFile,
-								data: d.Data
-							});
+						let ext = type;
+						if (type === 'html') {
+							if (d.Data.length === 0) {
+								return;
+							}
 						}
+						if (type === 'css') {
+							ext = 'scss';
+						}
+
+						if (type === 'script') {
+							ext = 'js';
+						}
+
+						let relFile = `variants/${variant}.${ext}`;
+						const outFile = path.resolve(srcDir, relFile);
+						allFiles.push({
+							name: relFile,
+							file: outFile,
+							data: d.Data
+						});
 					});
 				}
 			});
